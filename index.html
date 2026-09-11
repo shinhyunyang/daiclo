@@ -132,13 +132,8 @@
     <span id="toastMessage"></span>
   </div>
 
-  <!-- 화면 왼쪽 하단: 5분 자동 및 갱신 시각 표시 뱃지 -->
+  <!-- 화면 왼쪽 하단: 갱신 시각 표시 뱃지 -->
   <aside aria-label="데이터 동기화 상태" class="fixed bottom-4 sm:bottom-6 left-4 sm:left-6 z-30 flex items-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 bg-white/95 backdrop-blur-md border border-emerald-200/80 rounded-2xl shadow-md text-emerald-900 select-none pointer-events-auto max-w-[50vw] sm:max-w-none truncate">
-    <div class="flex items-center gap-1.5 text-[11px] sm:text-xs text-emerald-700 font-bold shrink-0">
-      <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-      <span>5분 자동</span>
-    </div>
-    <span class="w-[1px] h-3 bg-emerald-200 shrink-0"></span>
     <div id="statSourceStatus" class="text-[10px] sm:text-[11px] font-semibold text-emerald-700/80 truncate">데이터 준비 중...</div>
   </aside>
 
@@ -235,14 +230,24 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, collection, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
     let ordersData = [];
     let searchQuery = "";
     let activeSelectedNickname = "";
     let multiNicknameChoices = [];
+    let pickupHistoryList = [];
 
     const SHEET_ID = "11OG6u2i64D6exMiBgqGbkq-wrmxrYrVfLSzbYsBoXC8";
     const APPS_SCRIPT_SYNC_URL = localStorage.getItem('daiclo_sync_url') || "https://script.google.com/macros/s/AKfycbzTzeBSyjwijH8ps3xXSYa4bW8BO2_Z7iwBQHixcsQ9Sx1LhCKxtfnVZl5bbP1DzV-O/exec";
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'daiclo-order-sync';
+    let db = null;
+    let auth = null;
+    let currentUser = null;
 
     // 미리보기 및 네트워크 지연 대비 샘플 데이터
     const SAMPLE_INITIAL_ORDERS = [
@@ -251,6 +256,85 @@
       { id: 'ORD-3', sheetRowIndex: 3, orderDate: '2026.09.07', pickupDate: '2026.09.10', nickname: '송파러버', productName: 'DAICLO 방수 윈드브레이커 자켓', quantity: 1, amount: 72000, status: '완료', orderCode: 'DC-8842' },
       { id: 'ORD-4', sheetRowIndex: 4, orderDate: '2026.09.10', pickupDate: '2026.09.12', nickname: '1234', productName: '데일리 오가닉 코튼 티셔츠 3팩', quantity: 1, amount: 29900, status: '픽업예정', orderCode: 'DC-9130' }
     ];
+
+    async function initCloudSync() {
+      try {
+        if (typeof __firebase_config === 'undefined') {
+          pickupHistoryList = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
+          syncCompletedOrdersWithHistory();
+          updateHistoryButtonAppearance();
+          return;
+        }
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          const cred = await signInWithCustomToken(auth, __initial_auth_token);
+          currentUser = cred.user;
+        } else {
+          const cred = await signInAnonymously(auth);
+          currentUser = cred.user;
+        }
+
+        if (!currentUser) return;
+
+        // 모든 기기 간 실시간 픽업 내역 공유 리스너 등록
+        const historyColl = collection(db, 'artifacts', appId, 'public', 'data', 'pickup_history');
+        onSnapshot(historyColl, (snapshot) => {
+          pickupHistoryList = snapshot.docs.map(docSnap => ({
+            docId: docSnap.id,
+            ...docSnap.data()
+          }));
+
+          // 최신 처리 순으로 메모리 정렬
+          pickupHistoryList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+          // 주문 목록 상태 및 버튼 색상 동기화
+          syncCompletedOrdersWithHistory();
+          updateHistoryButtonAppearance();
+          renderHistory();
+          renderOrders();
+        }, (error) => {
+          console.warn("Cloud sync error:", error);
+          pickupHistoryList = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
+          syncCompletedOrdersWithHistory();
+          updateHistoryButtonAppearance();
+          renderHistory();
+        });
+      } catch (err) {
+        console.warn("Init cloud sync failed:", err);
+        pickupHistoryList = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
+        syncCompletedOrdersWithHistory();
+        updateHistoryButtonAppearance();
+      }
+    }
+
+    function syncCompletedOrdersWithHistory() {
+      if (!ordersData || ordersData.length === 0 || !pickupHistoryList) return;
+
+      const historyCodeSet = new Set();
+      const historyKeySet = new Set();
+
+      pickupHistoryList.forEach(item => {
+        if (item.orderCode && item.orderCode !== '코드없음') {
+          historyCodeSet.add(item.orderCode.trim());
+        }
+        if (item.nickname && item.productName) {
+          historyKeySet.add(`${item.nickname.trim()}_${item.productName.trim()}_${(item.orderDate || '').trim()}`);
+        }
+      });
+
+      ordersData.forEach(order => {
+        const hasCode = order.orderCode && order.orderCode.trim() !== '' && order.orderCode !== '코드없음';
+        const key = `${(order.nickname || '').trim()}_${(order.productName || '').trim()}_${(order.orderDate || '').trim()}`;
+        if ((hasCode && historyCodeSet.has(order.orderCode.trim())) || historyKeySet.has(key)) {
+          order.status = "완료";
+        }
+      });
+    }
 
     function showToast(message, type = "success") {
       const toast = document.getElementById("toastNotification");
@@ -401,7 +485,7 @@
                 </span>
               ` : ''}
               
-              <!-- 품목명 및 수량 / 금액 (동일 폰트 크기로 자연스럽고 세련되게 나열) -->
+              <!-- 품목명 및 수량 / 금액 -->
               <span class="text-base sm:text-lg font-extrabold text-slate-900 truncate shrink-0 max-w-[55%] sm:max-w-none" title="${escapeHtml(order.productName || '상품명 없음')}">
                 ${escapeHtml(order.productName || "상품명 없음")}
               </span>
@@ -450,40 +534,162 @@
     function updateHistoryButtonAppearance() {
       const btn = document.getElementById("openHistoryTriggerBtn");
       if (!btn) return;
-      const history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
       
-      if (history.length > 0) {
+      const hasHistory = pickupHistoryList && pickupHistoryList.length > 0;
+      if (hasHistory) {
         btn.className = "px-3 py-2 sm:pl-4 sm:pr-5 sm:py-3.5 rounded-xl sm:rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 sm:gap-2.5 border border-emerald-500 cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700";
-        btn.innerHTML = '<i data-lucide="clipboard-list" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-emerald-100"></i><span class="font-bold text-[11px] sm:text-sm tracking-tight sm:tracking-wide">변경확인</span>';
+        btn.innerHTML = '<i data-lucide="clipboard-list" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-emerald-100"></i><span class="font-bold text-[11px] sm:text-sm tracking-tight sm:tracking-wide">정보변경확인</span>';
       } else {
         btn.className = "px-3 py-2 sm:pl-4 sm:pr-5 sm:py-3.5 rounded-xl sm:rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 sm:gap-2.5 border border-emerald-200 cursor-pointer bg-white text-emerald-800 hover:bg-emerald-50";
-        btn.innerHTML = '<i data-lucide="clipboard-list" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-emerald-600"></i><span class="font-bold text-[11px] sm:text-sm tracking-tight sm:tracking-wide">변경확인</span>';
+        btn.innerHTML = '<i data-lucide="clipboard-list" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-emerald-600"></i><span class="font-bold text-[11px] sm:text-sm tracking-tight sm:tracking-wide">정보변경확인</span>';
       }
       if(window.lucide) lucide.createIcons();
     }
 
-    function saveToHistory(order) {
-      let history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
+    window.deleteHistoryItem = async function(idOrIndex) {
+      if (db && currentUser && typeof idOrIndex === 'string' && idOrIndex.length > 5) {
+        try {
+          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pickup_history', idOrIndex));
+          showToast("공유 내역에서 삭제되었습니다.", "info");
+          return;
+        } catch (e) {
+          console.warn("Cloud delete error:", e);
+        }
+      }
+
+      const idx = typeof idOrIndex === 'number' 
+        ? idOrIndex 
+        : pickupHistoryList.findIndex(item => item.docId === idOrIndex);
+
+      if (idx >= 0) {
+        pickupHistoryList.splice(idx, 1);
+        localStorage.setItem('daiclo_pickup_history', JSON.stringify(pickupHistoryList));
+        renderHistory();
+        updateHistoryButtonAppearance();
+        showToast("선택한 내역이 삭제되었습니다.", "info");
+      }
+    };
+
+    function renderHistory() {
+      const histList = document.getElementById("historyListContainer");
+      if (!histList) return;
+      
+      histList.innerHTML = '';
+      if(!pickupHistoryList || pickupHistoryList.length === 0) {
+        histList.innerHTML = `
+          <div class="text-center text-slate-400 py-16 flex flex-col items-center bg-white rounded-2xl border border-dashed border-slate-200 p-6">
+            <i data-lucide="clipboard-x" class="w-12 h-12 mb-3 text-slate-300 stroke-[1.5]"></i>
+            <p class="font-bold text-slate-600 text-sm">픽업 상태를 변경한 내역이 없습니다</p>
+            <p class="text-xs text-slate-400 mt-1">조회 화면에서 픽업예정 버튼을 누르면 모든 기기에 실시간 공유됩니다.</p>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+      
+      const listWrapper = document.createElement('div');
+      listWrapper.className = "flex flex-col gap-2.5";
+      
+      pickupHistoryList.forEach((item, index) => {
+        const hasValidOrderCode = item.orderCode && item.orderCode.trim() !== '' && item.orderCode !== '코드없음';
+        const targetDeleteKey = item.docId ? `'${item.docId}'` : index;
+
+        listWrapper.innerHTML += `
+          <div class="bg-white border border-emerald-100/90 rounded-xl p-2.5 sm:p-3.5 shadow-xs hover:border-emerald-300 transition-all flex flex-col gap-1.5 sm:gap-2">
+            <!-- 1번째 줄: [닉네임] [주문코드] 상품명 ... [처리시간] [삭제] -->
+            <div class="flex items-center justify-between gap-1.5 sm:gap-2.5 min-w-0">
+              <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] sm:text-xs font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300/80 shrink-0">
+                  ${escapeHtml(item.nickname || "닉네임")}
+                </span>
+                ${hasValidOrderCode ? `
+                  <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono font-bold text-slate-600 shrink-0">
+                    <i data-lucide="hash" class="w-2.5 h-2.5 text-slate-400"></i>${escapeHtml(item.orderCode)}
+                  </span>
+                ` : ''}
+                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate flex-1" title="${escapeHtml(item.productName || '상품명 없음')}">
+                  ${escapeHtml(item.productName || "상품명 없음")}
+                </span>
+              </div>
+
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-[10px] sm:text-[11px] font-mono text-slate-400 font-semibold" title="처리일자: ${escapeHtml(item.dateOnly || '')}">${escapeHtml(item.timeOnly || '-')}</span>
+                <button type="button" onclick="window.deleteHistoryItem(${targetDeleteKey})" aria-label="내역 삭제" class="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="내역 삭제">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- 2번째 줄: [주문] [픽업] ... [수량 / 금액] [완료] -->
+            <div class="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-100 text-xs">
+              <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 flex-wrap">
+                <div class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-mono text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200/70">
+                  <span class="text-[8px] sm:text-[9px] font-extrabold text-slate-400">주문</span>
+                  <span>${escapeHtml(item.orderDate || "-")}</span>
+                </div>
+                <div class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-mono text-emerald-900 bg-white px-2.5 py-0.5 rounded border border-emerald-300 shadow-2xs">
+                  <span class="text-[8px] sm:text-[9px] font-extrabold text-emerald-700">픽업</span>
+                  <span class="font-bold text-emerald-900">${escapeHtml(item.pickupDate || "-")}</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                <div class="text-[10px] sm:text-xs font-mono text-slate-600">
+                  <span class="font-bold text-slate-700">${item.quantity || 1}개</span>
+                  <span class="text-slate-300 mx-0.5">/</span>
+                  <span class="font-extrabold text-emerald-950">${Number(item.amount || 0).toLocaleString()}원</span>
+                </div>
+                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-600 text-white rounded text-[9px] sm:text-[10px] font-bold">
+                  <i data-lucide="check" class="w-2.5 h-2.5 stroke-[2.5]"></i>
+                  <span>완료</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      histList.appendChild(listWrapper);
+      if (window.lucide) lucide.createIcons();
+    }
+
+    async function saveToHistory(order) {
       const now = new Date();
       const dateStr = now.toLocaleDateString();
       const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
       const validCode = (order.orderCode && order.orderCode.trim() !== '' && order.orderCode !== '코드없음') ? order.orderCode.trim() : '';
 
-      history.unshift({
+      const newEntry = {
         orderCode: validCode,
-        nickname: order.nickname,
-        productName: order.productName,
-        quantity: order.quantity,
-        amount: order.amount,
+        nickname: order.nickname || "",
+        productName: order.productName || "",
+        quantity: order.quantity || 1,
+        amount: order.amount || 0,
         orderDate: order.orderDate || "-",
         pickupDate: order.pickupDate || "-",
         dateOnly: dateStr,
         timeOnly: timeStr,
-        time: dateStr + ' ' + timeStr
-      });
+        time: dateStr + ' ' + timeStr,
+        createdAt: Date.now()
+      };
+
+      // 1. 모든 기기와 공유하기 위해 클라우드에 실시간 저장
+      if (db && currentUser) {
+        try {
+          const historyColl = collection(db, 'artifacts', appId, 'public', 'data', 'pickup_history');
+          await addDoc(historyColl, newEntry);
+          return;
+        } catch (err) {
+          console.warn("Cloud save fallback to local:", err);
+        }
+      }
+
+      // 오프라인 대비 로컬 보관 폴백
+      let history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
+      history.unshift(newEntry);
       if(history.length > 200) history.pop();
       localStorage.setItem('daiclo_pickup_history', JSON.stringify(history));
+      pickupHistoryList = history;
       updateHistoryButtonAppearance();
     }
 
@@ -496,15 +702,15 @@
       saveToHistory(order);
 
       if (!order.orderCode) {
-        showToast("주문코드가 없어 기기 내역에만 저장되었습니다.", "info");
+        showToast("주문코드가 없어 공유 내역에만 등록되었습니다.", "info");
         return;
       }
 
       const targetUrl = APPS_SCRIPT_SYNC_URL + "?orderCode=" + encodeURIComponent(order.orderCode) + "&status=1&t=" + Date.now();
       
       fetch(targetUrl, { method: 'GET', mode: 'no-cors' })
-        .then(() => showToast(`[${order.nickname}] 처리 완료 (시트 동기화)`, "success"))
-        .catch(() => showToast(`처리 완료 (네트워크 오프라인 모드)`, "info"));
+        .then(() => showToast(`[${order.nickname}] 처리 완료 (모든 기기 공유됨)`, "success"))
+        .catch(() => showToast(`[${order.nickname}] 처리 완료 (공유됨)`, "success"));
     };
 
     function processRawMatrix(matrix) {
@@ -555,6 +761,8 @@
           const parsed = processRawMatrix(matrix);
           ordersData = parsed.length > 0 ? parsed : SAMPLE_INITIAL_ORDERS;
           
+          syncCompletedOrdersWithHistory();
+
           const now = new Date();
           const dateStr = now.toLocaleDateString();
           const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -572,6 +780,7 @@
           if (script.parentNode) script.parentNode.removeChild(script);
           if (ordersData.length === 0) {
             ordersData = [...SAMPLE_INITIAL_ORDERS];
+            syncCompletedOrdersWithHistory();
             render();
           }
           const statusElem = document.getElementById("statSourceStatus");
@@ -584,6 +793,7 @@
         if (timeoutHandler) clearTimeout(timeoutHandler);
         if (ordersData.length === 0) {
           ordersData = [...SAMPLE_INITIAL_ORDERS];
+          syncCompletedOrdersWithHistory();
           render();
         }
       };
@@ -592,8 +802,10 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       ordersData = [...SAMPLE_INITIAL_ORDERS];
+      
+      // 실시간 클라우드 공유 및 구글 시트 초기화
+      initCloudSync();
       loadGoogleSheetData(false);
-      updateHistoryButtonAppearance();
 
       let autoRefreshInterval = null;
 
@@ -617,7 +829,7 @@
         }
       }
 
-      // 자동 리프레시 주기 타이머 설정 (5분 = 300초)
+      // 자동 리프레시 주기 타이머 설정 (5분)
       function startAutoRefreshTimer() {
         if (autoRefreshInterval) clearInterval(autoRefreshInterval);
         autoRefreshInterval = setInterval(() => {
@@ -632,7 +844,7 @@
       if (manualHomeRefreshBtn) {
         manualHomeRefreshBtn.addEventListener("click", () => {
           resetToHomeScreen(true);
-          startAutoRefreshTimer(); // 수동 클릭 시 5분 주기 타이머 재설정
+          startAutoRefreshTimer();
         });
       }
 
@@ -730,8 +942,7 @@
       const systemSyncBtn = document.getElementById("systemSyncBtn");
       if (systemSyncBtn) {
         systemSyncBtn.addEventListener("click", () => {
-          const history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
-          if (history.length > 0) {
+          if (pickupHistoryList && pickupHistoryList.length > 0) {
             showAlert("정보변경확인 후<br><span class='text-emerald-700 font-bold'>DB Update</span>가 가능합니다.");
           } else {
             passwordTargetAction = "refresh";
@@ -768,7 +979,6 @@
       // 히스토리 모달 제어
       const histModal = document.getElementById("historyModal");
       const histContent = document.getElementById("historyModalContent");
-      const histList = document.getElementById("historyListContainer");
       
       const toggleHistoryModal = (show) => {
         if (!histModal || !histContent) return;
@@ -780,96 +990,6 @@
 
       const closeHistBtn = document.getElementById("closeHistoryBtn");
       if (closeHistBtn) closeHistBtn.addEventListener("click", () => toggleHistoryModal(false));
-      
-      window.deleteHistoryItem = function(index) {
-        let history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
-        history.splice(index, 1);
-        localStorage.setItem('daiclo_pickup_history', JSON.stringify(history));
-        renderHistory();
-        updateHistoryButtonAppearance();
-        showToast("선택한 내역이 삭제되었습니다.", "info");
-      };
-
-      function renderHistory() {
-        if (!histList) return;
-        let history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
-        histList.innerHTML = '';
-        if(history.length === 0) {
-          histList.innerHTML = `
-            <div class="text-center text-slate-400 py-16 flex flex-col items-center bg-white rounded-2xl border border-dashed border-slate-200 p-6">
-              <i data-lucide="clipboard-x" class="w-12 h-12 mb-3 text-slate-300 stroke-[1.5]"></i>
-              <p class="font-bold text-slate-600 text-sm">픽업 상태를 변경한 내역이 없습니다</p>
-              <p class="text-xs text-slate-400 mt-1">조회 화면에서 픽업예정 버튼을 누르면 이곳에 기록됩니다.</p>
-            </div>
-          `;
-          if (window.lucide) lucide.createIcons();
-          return;
-        }
-        
-        const listWrapper = document.createElement('div');
-        listWrapper.className = "flex flex-col gap-2.5";
-        
-        history.forEach((item, index) => {
-          const hasValidOrderCode = item.orderCode && item.orderCode.trim() !== '' && item.orderCode !== '코드없음';
-
-          listWrapper.innerHTML += `
-            <div class="bg-white border border-emerald-100/90 rounded-xl p-2.5 sm:p-3.5 shadow-xs hover:border-emerald-300 transition-all flex flex-col gap-1.5 sm:gap-2">
-              <!-- 1번째 줄: [닉네임] [주문코드] 상품명 ... [처리시간] [삭제] -->
-              <div class="flex items-center justify-between gap-1.5 sm:gap-2.5 min-w-0">
-                <div class="flex items-center gap-1.5 min-w-0 flex-1">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] sm:text-xs font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300/80 shrink-0">
-                    ${escapeHtml(item.nickname || "닉네임")}
-                  </span>
-                  ${hasValidOrderCode ? `
-                    <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono font-bold text-slate-600 shrink-0">
-                      <i data-lucide="hash" class="w-2.5 h-2.5 text-slate-400"></i>${escapeHtml(item.orderCode)}
-                    </span>
-                  ` : ''}
-                  <span class="text-xs sm:text-sm font-bold text-slate-800 truncate flex-1" title="${escapeHtml(item.productName || '상품명 없음')}">
-                    ${escapeHtml(item.productName || "상품명 없음")}
-                  </span>
-                </div>
-
-                <div class="flex items-center gap-1.5 shrink-0">
-                  <span class="text-[10px] sm:text-[11px] font-mono text-slate-400 font-semibold" title="처리일자: ${escapeHtml(item.dateOnly || '')}">${escapeHtml(item.timeOnly || '-')}</span>
-                  <button type="button" onclick="deleteHistoryItem(${index})" aria-label="내역 삭제" class="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="내역 삭제">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- 2번째 줄: [주문] [픽업] ... [수량 / 금액] [완료] -->
-              <div class="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-100 text-xs">
-                <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 flex-wrap">
-                  <div class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/70">
-                    <span class="text-[8px] sm:text-[9px] font-extrabold text-slate-400">주문</span>
-                    <span>${escapeHtml(item.orderDate || "-")}</span>
-                  </div>
-                  <div class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-mono text-emerald-900 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                    <span class="text-[8px] sm:text-[9px] font-extrabold text-emerald-600">픽업</span>
-                    <span class="font-bold text-emerald-800">${escapeHtml(item.pickupDate || "-")}</span>
-                  </div>
-                </div>
-
-                <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-                  <div class="text-[10px] sm:text-xs font-mono text-slate-600">
-                    <span class="font-bold text-slate-700">${item.quantity || 1}개</span>
-                    <span class="text-slate-300 mx-0.5">/</span>
-                    <span class="font-extrabold text-emerald-950">${Number(item.amount || 0).toLocaleString()}원</span>
-                  </div>
-                  <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-600 text-white rounded text-[9px] sm:text-[10px] font-bold">
-                    <i data-lucide="check" class="w-2.5 h-2.5 stroke-[2.5]"></i>
-                    <span>완료</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          `;
-        });
-        
-        histList.appendChild(listWrapper);
-        if (window.lucide) lucide.createIcons();
-      }
 
       if (window.lucide) lucide.createIcons();
     });
