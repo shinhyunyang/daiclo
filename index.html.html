@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAICLO 주문내역 조회 시스템</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Pretendard', 'sans-serif'],
+            brand: ['Montserrat', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Pretendard', sans-serif; background-color: #f7faf8; color: #064e3b; }
+    .badge-logo {
+      background-color: #064e3b; color: #fff; border-radius: 9999px; display: inline-flex;
+      align-items: center; justify-content: center; letter-spacing: -0.02em; border: 2px solid #047857;
+      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.2);
+    }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #a7f3d0; border-radius: 9999px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #6ee7b7; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#f7faf8] flex flex-col selection:bg-emerald-200 selection:text-emerald-900">
+
+  <header class="bg-white/90 backdrop-blur-md border-b border-emerald-100 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="badge-logo px-4 py-1.5 sm:px-5 sm:py-2">
+          <div class="flex items-center tracking-wider font-extrabold font-brand text-lg sm:text-2xl text-white select-none">
+            <span>D</span>
+            <span class="relative mx-[0.5px]">
+              <span>A</span>
+              <span class="absolute left-1/2 -translate-x-1/2 bottom-[4px] w-[3px] h-[3px] bg-[#064e3b] rounded-full"></span>
+            </span>
+            <span>ICLO</span>
+            <span class="text-[9px] sm:text-[11px] ml-1 font-sans font-bold border border-emerald-300 rounded-full w-3.5 h-3.5 flex items-center justify-center text-emerald-200">R</span>
+          </div>
+        </div>
+        <span class="text-sm sm:text-base font-extrabold text-emerald-900 tracking-tight ml-1">송파헬리오시티점</span>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 w-full space-y-6 pb-32">
+    <div class="bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-emerald-700/40">
+      <!-- 닉네임 조회 영역 우측 상단 집모양 홈 리프레시 버튼 -->
+      <button id="manualHomeRefreshBtn" type="button" title="홈 화면으로 초기화 및 새로고침" aria-label="홈 화면으로 초기화 및 새로고침"
+        class="absolute top-4 sm:top-6 right-4 sm:right-6 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/15 hover:bg-white/25 active:scale-90 text-white border border-white/20 flex items-center justify-center shadow-md backdrop-blur-xs transition-all cursor-pointer">
+        <i data-lucide="home" class="w-5 h-5 text-emerald-100 stroke-[2.2]"></i>
+      </button>
+
+      <div class="absolute -right-6 -bottom-6 opacity-10 pointer-events-none select-none font-brand font-black text-8xl text-emerald-300">
+        DAICLO
+      </div>
+
+      <div class="relative z-10 max-w-3xl space-y-4 pr-12 sm:pr-14">
+        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex flex-wrap items-baseline gap-2">
+          <span>주문조회 &amp; 픽업 체크</span>
+        </h1>
+        <p class="text-sm text-emerald-100/90 leading-relaxed font-normal">
+          닉네임을 조회하시면 주문내역을 확인할 수 있습니다. 픽업시 <strong class="text-emerald-300 font-bold">"픽업예정"</strong> 버튼을 클릭해주세요.
+        </p>
+
+        <div class="pt-2 relative space-y-3">
+          <div class="flex flex-col sm:flex-row gap-2.5">
+            <div class="relative flex-1 flex items-center">
+              <div class="absolute left-4 text-emerald-600/70 pointer-events-none">
+                <i data-lucide="search" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+              </div>
+              <input type="text" id="nicknameSearchInput" placeholder="닉네임 조회 (예. 헬리오1234 / 1234)" autocomplete="off"
+                class="w-full bg-white text-emerald-950 placeholder:text-emerald-700/40 pl-11 sm:pl-12 pr-10 py-3 sm:py-3.5 rounded-2xl font-semibold text-sm sm:text-base focus:outline-none focus:ring-4 focus:ring-emerald-400/40 shadow-lg">
+              <button id="clearSearchBtn" type="button" aria-label="검색어 지우기" class="absolute right-3.5 text-emerald-600 hover:text-emerald-900 hidden p-1 cursor-pointer">
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <button id="searchNicknameBtn" type="button" class="px-6 py-3 sm:px-7 sm:py-3.5 bg-emerald-400 hover:bg-emerald-300 active:scale-95 text-emerald-950 font-extrabold text-sm sm:text-base rounded-2xl shadow-lg flex items-center justify-center gap-2 cursor-pointer shrink-0 border border-emerald-300 transition-all">
+              <i data-lucide="search" class="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]"></i>
+              <span>조회</span>
+            </button>
+          </div>
+
+          <div id="matchingChipsContainer" class="hidden flex flex-wrap items-center gap-2 pt-2">
+            <span class="text-xs text-emerald-200/90 font-bold">닉네임 선택:</span>
+            <div id="nicknameChipList" class="flex flex-wrap gap-1.5 items-center"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 rounded-3xl border border-emerald-700/50 shadow-xl overflow-hidden min-h-[300px]">
+      <div id="ordersListContainer" class="p-4 sm:p-6 space-y-5"></div>
+
+      <div id="initialStatePrompt" class="p-10 sm:p-16 text-center text-emerald-100 flex flex-col items-center justify-center h-full">
+        <div class="w-16 h-16 bg-emerald-800/60 rounded-2xl flex items-center justify-center mx-auto mb-4 text-emerald-300 border border-emerald-600/50">
+          <i data-lucide="user-search" class="w-8 h-8"></i>
+        </div>
+        <h3 id="initialPromptTitle" class="text-base sm:text-lg font-bold text-white">주문조회 &amp; 픽업 체크</h3>
+        <p id="initialPromptDesc" class="text-xs sm:text-sm text-emerald-200 mt-2 max-w-md mx-auto leading-relaxed">
+          상단 검색창에 닉네임을 입력 후 <strong>[조회]</strong>를 누르면 주문 내역이 표시됩니다.
+        </p>
+      </div>
+
+      <div id="emptyResultsState" class="hidden p-10 sm:p-16 text-center text-emerald-100 flex flex-col items-center justify-center h-full">
+        <div class="w-16 h-16 bg-rose-900/40 rounded-2xl flex items-center justify-center mx-auto mb-4 text-rose-300 border border-rose-800/50">
+          <i data-lucide="search-x" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-base sm:text-lg font-bold text-white">일치하는 주문 내역이 없습니다</h3>
+        <p class="text-xs sm:text-sm text-emerald-200 mt-2">입력하신 닉네임 철자를 다시 한 번 확인해주세요.</p>
+        <button id="resetAllFiltersBtn" type="button" class="mt-5 px-5 py-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">
+          초기화
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- 토스트 알림 -->
+  <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-white text-sm font-semibold whitespace-nowrap">
+    <div id="toastIcon"></div>
+    <span id="toastMessage"></span>
+  </div>
+
+  <!-- 화면 왼쪽 하단: 5분 자동 및 갱신 시각 표시 뱃지 -->
+  <aside aria-label="데이터 동기화 상태" class="fixed bottom-4 sm:bottom-6 left-4 sm:left-6 z-30 flex items-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 bg-white/95 backdrop-blur-md border border-emerald-200/80 rounded-2xl shadow-md text-emerald-900 select-none pointer-events-auto max-w-[50vw] sm:max-w-none truncate">
+    <div class="flex items-center gap-1.5 text-[11px] sm:text-xs text-emerald-700 font-bold shrink-0">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span>5분 자동</span>
+    </div>
+    <span class="w-[1px] h-3 bg-emerald-200 shrink-0"></span>
+    <div id="statSourceStatus" class="text-[10px] sm:text-[11px] font-semibold text-emerald-700/80 truncate">데이터 준비 중...</div>
+  </aside>
+
+  <!-- 플로팅 버튼 그룹 -->
+  <div class="fixed bottom-6 right-6 z-40 flex flex-col sm:flex-row items-end sm:items-center gap-3">
+    <!-- DB UPDATE 플로팅 버튼 -->
+    <button id="systemSyncBtn" class="pl-4 pr-5 py-3.5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 border border-emerald-200 cursor-pointer bg-white text-emerald-800 hover:bg-emerald-50">
+      <i data-lucide="refresh-ccw" class="w-5 h-5 text-emerald-600"></i>
+      <span class="font-bold text-sm tracking-wide">DB UPDATE</span>
+    </button>
+    
+    <!-- 정보변경(히스토리) 플로팅 버튼 -->
+    <button id="openHistoryTriggerBtn" class="pl-4 pr-5 py-3.5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 border border-emerald-200 cursor-pointer bg-white text-emerald-800 hover:bg-emerald-50">
+      <i data-lucide="clipboard-list" class="w-5 h-5 text-emerald-600"></i>
+      <span class="font-bold text-sm tracking-wide">정보변경확인</span>
+    </button>
+  </div>
+
+  <!-- 비밀번호 입력 모달 -->
+  <div id="passwordModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-emerald-950/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 p-8 text-center" id="passwordModalContent">
+      <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i data-lucide="lock" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-xl font-extrabold text-slate-800 mb-2">관리자 비밀번호</h3>
+      <p class="text-xs text-slate-500 mb-6">내역을 확인하려면 비밀번호를 입력해주세요.</p>
+      
+      <input type="password" id="adminPasswordInput" class="w-full border-2 border-emerald-100 bg-slate-50 rounded-xl p-4 text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors mb-6" placeholder="****" maxlength="4">
+      
+      <div class="flex gap-2 justify-center">
+        <button id="cancelPasswordBtn" type="button" class="flex-1 px-4 py-3 text-slate-600 bg-slate-100 hover:bg-slate-200 font-bold rounded-xl transition-colors">취소</button>
+        <button id="verifyPasswordBtn" type="button" class="flex-1 px-4 py-3 text-white bg-emerald-600 hover:bg-emerald-700 font-bold rounded-xl transition-colors">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 히스토리 내역 모달 -->
+  <div id="historyModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-emerald-950/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[88vh] flex flex-col transform scale-95 transition-transform duration-300 border border-emerald-100" id="historyModalContent">
+      <div class="p-5 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-3xl">
+        <div class="flex items-center gap-3 text-emerald-800">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+            <i data-lucide="history" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight">픽업 처리 내역</h3>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">완료 처리된 주문의 상세 정보입니다</p>
+          </div>
+        </div>
+        <button id="closeHistoryBtn" type="button" aria-label="닫기" class="text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl transition-colors p-2 cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      
+      <div class="p-4 sm:p-6 overflow-y-auto flex-1 custom-scroll bg-slate-50/60 rounded-b-3xl">
+        <div id="historyListContainer" class="space-y-3.5">
+          <!-- 히스토리 렌더링 영역 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 커스텀 안내 팝업(Alert 대체 모달) -->
+  <div id="customAlertModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-emerald-950/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 p-8 text-center border border-emerald-100" id="customAlertContent">
+      <div class="w-14 h-14 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-rose-100">
+        <i data-lucide="alert-circle" class="w-7 h-7"></i>
+      </div>
+      <h3 class="text-xl font-extrabold text-slate-800 mb-3">안내</h3>
+      <p id="customAlertMessage" class="text-sm text-slate-600 mb-8 leading-relaxed font-medium"></p>
+      
+      <button id="closeAlertBtn" type="button" class="w-full px-4 py-3.5 text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 font-bold rounded-xl transition-all shadow-md">
+        확인
+      </button>
+    </div>
+  </div>
+
+  <!-- 커스텀 확인 팝업(Confirm 대체 모달) -->
+  <div id="customConfirmModal" class="fixed inset-0 z-[65] flex items-center justify-center p-4 bg-emerald-950/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 p-8 text-center border border-emerald-100" id="customConfirmContent">
+      <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-amber-100">
+        <i data-lucide="help-circle" class="w-7 h-7"></i>
+      </div>
+      <h3 class="text-xl font-extrabold text-slate-800 mb-2">확인</h3>
+      <p id="customConfirmMessage" class="text-xs sm:text-sm text-slate-600 mb-6 leading-relaxed font-medium"></p>
+      <div class="flex gap-2">
+        <button id="customConfirmCancelBtn" type="button" class="flex-1 px-4 py-3 text-slate-600 bg-slate-100 hover:bg-slate-200 font-bold rounded-xl transition-colors">
+          취소
+        </button>
+        <button id="customConfirmOkBtn" type="button" class="flex-1 px-4 py-3 text-white bg-rose-600 hover:bg-rose-700 active:scale-95 font-bold rounded-xl transition-colors shadow-sm">
+          삭제하기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let ordersData = [];
+    let searchQuery = "";
+    let activeSelectedNickname = "";
+    let multiNicknameChoices = [];
+
+    const SHEET_ID = "11OG6u2i64D6exMiBgqGbkq-wrmxrYrVfLSzbYsBoXC8";
+    const APPS_SCRIPT_SYNC_URL = localStorage.getItem('daiclo_sync_url') || "https://script.google.com/macros/s/AKfycbzTzeBSyjwijH8ps3xXSYa4bW8BO2_Z7iwBQHixcsQ9Sx1LhCKxtfnVZl5bbP1DzV-O/exec";
+
+    // 미리보기 및 네트워크 지연 대비 샘플 데이터
+    const SAMPLE_INITIAL_ORDERS = [
+      { id: 'ORD-1', sheetRowIndex: 1, orderDate: '2026.09.08', pickupDate: '2026.09.11', nickname: '헬리오1234', productName: 'DAICLO 프리미엄 에어로 쿨링 셔츠', quantity: 2, amount: 58000, status: '픽업예정', orderCode: 'DC-9011' },
+      { id: 'ORD-2', sheetRowIndex: 2, orderDate: '2026.09.09', pickupDate: '2026.09.11', nickname: '헬리오1234', productName: 'DAICLO 컴포트 슬랙스 네이비 (L)', quantity: 1, amount: 39000, status: '픽업예정', orderCode: 'DC-9012' },
+      { id: 'ORD-3', sheetRowIndex: 3, orderDate: '2026.09.07', pickupDate: '2026.09.10', nickname: '송파러버', productName: 'DAICLO 방수 윈드브레이커 자켓', quantity: 1, amount: 72000, status: '완료', orderCode: 'DC-8842' },
+      { id: 'ORD-4', sheetRowIndex: 4, orderDate: '2026.09.10', pickupDate: '2026.09.12', nickname: '1234', productName: '데일리 오가닉 코튼 티셔츠 3팩', quantity: 1, amount: 29900, status: '픽업예정', orderCode: 'DC-9130' }
+    ];
+
+    function showToast(message, type = "success") {
+      const toast = document.getElementById("toastNotification");
+      const toastMsg = document.getElementById("toastMessage");
+      const toastIcon = document.getElementById("toastIcon");
+      if (!toast || !toastMsg || !toastIcon) return;
+
+      toastMsg.textContent = message;
+      if (type === "success") {
+        toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-white text-sm font-bold bg-emerald-600 transform translate-y-0 opacity-100";
+        toastIcon.innerHTML = '<i data-lucide="check-circle" class="w-5 h-5"></i>';
+      } else if (type === "info") {
+        toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-white text-sm font-bold bg-slate-800 transform translate-y-0 opacity-100";
+        toastIcon.innerHTML = '<i data-lucide="info" class="w-5 h-5 text-emerald-400"></i>';
+      } else {
+        toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-white text-sm font-bold bg-rose-600 transform translate-y-0 opacity-100";
+        toastIcon.innerHTML = '<i data-lucide="alert-circle" class="w-5 h-5"></i>';
+      }
+      if (window.lucide) lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translate(-50%, 20px)';
+        toast.style.pointerEvents = 'none';
+      }, 3000);
+    }
+
+    function updateNicknameChips() {
+      const container = document.getElementById("matchingChipsContainer");
+      const chipContainer = document.getElementById("nicknameChipList");
+      if (!container || !chipContainer) return;
+      
+      chipContainer.innerHTML = "";
+
+      if (activeSelectedNickname || multiNicknameChoices.length === 0) {
+        container.classList.add("hidden");
+        return;
+      }
+
+      container.classList.remove("hidden");
+      multiNicknameChoices.slice(0, 30).forEach(nick => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "text-xs px-3.5 py-2 rounded-xl font-medium transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 bg-white/20 hover:bg-white/35 text-white backdrop-blur-xs border border-white/20 shadow-xs";
+        
+        const count = ordersData.filter(o => (o.nickname || "").toLowerCase() === nick.toLowerCase()).length;
+        chip.innerHTML = `
+          <span class="truncate max-w-[150px] font-bold text-sm">${escapeHtml(nick)}</span>
+          <span class="text-[10px] bg-black/40 text-emerald-200 px-1.5 py-0.5 rounded-md font-mono font-bold">${count}건</span>
+        `;
+        chip.addEventListener("click", () => selectNickname(nick));
+        chipContainer.appendChild(chip);
+      });
+    }
+
+    function selectNickname(nick) {
+      const searchInput = document.getElementById("nicknameSearchInput");
+      activeSelectedNickname = nick;
+      searchQuery = nick;
+      multiNicknameChoices = [];
+      if (searchInput) searchInput.value = nick;
+      const clearBtn = document.getElementById("clearSearchBtn");
+      if (clearBtn) clearBtn.classList.remove("hidden");
+      render();
+    }
+
+    function clearSelectedNickname() {
+      const searchInput = document.getElementById("nicknameSearchInput");
+      activeSelectedNickname = "";
+      searchQuery = "";
+      multiNicknameChoices = [];
+      if (searchInput) searchInput.value = "";
+      const clearBtn = document.getElementById("clearSearchBtn");
+      if (clearBtn) clearBtn.classList.add("hidden");
+      render();
+    }
+
+    function executeNicknameSearch() {
+      const input = document.getElementById("nicknameSearchInput");
+      const val = input ? input.value.trim() : "";
+      if (!val) return clearSelectedNickname();
+      
+      searchQuery = val;
+      const allNicknames = [...new Set(ordersData.map(o => (o.nickname || "").trim()).filter(Boolean))];
+      const matching = allNicknames.filter(n => n.toLowerCase().includes(val.toLowerCase()));
+
+      if (matching.length === 1 && matching[0].toLowerCase() === val.toLowerCase()) {
+        selectNickname(matching[0]);
+        return;
+      }
+
+      activeSelectedNickname = "";
+      multiNicknameChoices = matching;
+      render();
+      if(matching.length > 0) {
+        showToast(`${matching.length}건 검색됨. 하단 칩을 클릭하세요.`, "info");
+      }
+    }
+
+    function renderOrders() {
+      const container = document.getElementById("ordersListContainer");
+      const initial = document.getElementById("initialStatePrompt");
+      const empty = document.getElementById("emptyResultsState");
+      if (!container || !initial || !empty) return;
+      
+      container.innerHTML = "";
+
+      if (!activeSelectedNickname) {
+        initial.classList.remove("hidden");
+        empty.classList.add("hidden");
+        
+        if (searchQuery && multiNicknameChoices.length === 0) {
+          initial.classList.add("hidden");
+          empty.classList.remove("hidden");
+        }
+        return;
+      }
+
+      initial.classList.add("hidden");
+      const filtered = ordersData.filter(o => (o.nickname || "").toLowerCase() === activeSelectedNickname.toLowerCase());
+
+      if (filtered.length === 0) {
+        empty.classList.remove("hidden");
+        return;
+      }
+      empty.classList.add("hidden");
+
+      filtered.sort((a, b) => {
+        const timeA = new Date(String(a.orderDate).replace(/\./g, '-')).getTime() || 0;
+        const timeB = new Date(String(b.orderDate).replace(/\./g, '-')).getTime() || 0;
+        return timeB !== timeA ? timeB - timeA : (b.sheetRowIndex || 0) - (a.sheetRowIndex || 0);
+      });
+
+      filtered.forEach((order) => {
+        const isComplete = order.status === "완료" || order.status === "1";
+        const hasValidOrderCode = order.orderCode && order.orderCode.trim() !== '' && order.orderCode !== '코드없음';
+
+        const itemCard = document.createElement("div");
+        itemCard.className = `rounded-2xl transition-all p-3.5 sm:p-4.5 flex flex-col gap-2.5 ${isComplete ? 'bg-emerald-50/95 border border-emerald-200 opacity-75' : 'bg-white border-2 border-emerald-200/80 shadow-sm hover:border-emerald-400'}`;
+
+        itemCard.innerHTML = `
+          <!-- 1번째 줄: [주문코드] 품목 / 수량 / 금액 ... [완료 / 픽업예정 버튼] -->
+          <div class="flex items-center justify-between gap-3 min-w-0">
+            <div class="flex items-center gap-2 min-w-0 flex-1 flex-wrap sm:flex-nowrap">
+              ${hasValidOrderCode ? `
+                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[11px] sm:text-xs font-mono font-bold text-slate-600 shrink-0">
+                  <i data-lucide="hash" class="w-3 h-3 text-slate-400"></i>${escapeHtml(order.orderCode)}
+                </span>
+              ` : ''}
+              
+              <!-- 품목명 및 수량 / 금액 (동일 폰트 크기로 자연스럽고 세련되게 나열) -->
+              <span class="text-base sm:text-lg font-extrabold text-slate-900 truncate shrink-0 max-w-[55%] sm:max-w-none" title="${escapeHtml(order.productName || '상품명 없음')}">
+                ${escapeHtml(order.productName || "상품명 없음")}
+              </span>
+
+              <div class="inline-flex items-center gap-2 shrink-0 text-base sm:text-lg">
+                <span class="text-slate-300 font-bold select-none">/</span>
+                <span class="font-extrabold text-emerald-800 font-mono">${order.quantity}개</span>
+                <span class="text-slate-300 font-bold select-none">/</span>
+                <span class="font-black text-emerald-950 font-mono tracking-tight">${Number(order.amount).toLocaleString()}원</span>
+              </div>
+            </div>
+
+            <!-- 우측 액션 버튼 -->
+            <div class="shrink-0">
+              ${isComplete 
+                ? `<div class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-1 bg-slate-100 text-slate-400 border border-slate-200"><i data-lucide="check-circle-2" class="w-4 h-4"></i><span>완료</span></div>`
+                : `<button type="button" onclick="window.processPickup('${order.id}')" class="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-1.5 shadow-sm border-2 bg-white text-emerald-800 border-emerald-600 hover:bg-emerald-50 active:scale-95 cursor-pointer"><i data-lucide="check" class="w-4 h-4 text-emerald-600 stroke-[3]"></i><span>픽업예정</span></button>`
+              }
+            </div>
+          </div>
+
+          <!-- 2번째 줄: [주문일자] [픽업예정일자] -->
+          <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs sm:text-sm">
+            <div class="flex items-center gap-2 shrink-0 flex-wrap">
+              <div class="inline-flex items-center gap-1 text-[11px] sm:text-xs font-mono text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                <span class="text-[10px] sm:text-[11px] font-bold text-slate-400">주문</span>
+                <span class="font-medium">${escapeHtml(order.orderDate || "-")}</span>
+              </div>
+              <div class="inline-flex items-center gap-1 text-[11px] sm:text-xs font-mono text-emerald-900 bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-2xs">
+                <span class="text-[10px] sm:text-[11px] font-extrabold text-emerald-700">픽업</span>
+                <span class="font-bold text-emerald-900">${escapeHtml(order.pickupDate || "-")}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(itemCard);
+      });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function render() {
+      updateNicknameChips();
+      renderOrders();
+    }
+
+    function updateHistoryButtonAppearance() {
+      const btn = document.getElementById("openHistoryTriggerBtn");
+      if (!btn) return;
+      const history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
+      
+      if (history.length > 0) {
+        btn.className = "px-3 py-2 sm:pl-4 sm:pr-5 sm:py-3.5 rounded-xl sm:rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 sm:gap-2.5 border border-emerald-500 cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700";
+        btn.innerHTML = '<i data-lucide="clipboard-list" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-emerald-100"></i><span class="font-bold text-[11px] sm:text-sm tracking-tight sm:tracking-wide">변경확인</span>';
+      } else {
+        btn.className = "px-3 py-2 sm:pl-4 sm:pr-5 sm:py-3.5 rounded-xl sm:rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 sm:gap-2.5 border border-emerald-200 cursor-pointer bg-white text-emerald-800 hover:bg-emerald-50";
+        btn.innerHTML = '<i data-lucide="clipboard-list" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-emerald-600"></i><span class="font-bold text-[11px] sm:text-sm tracking-tight sm:tracking-wide">변경확인</span>';
+      }
+      if(window.lucide) lucide.createIcons();
+    }
+
+    function saveToHistory(order) {
+      let history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
+      const now = new Date();
+      const dateStr = now.toLocaleDateString();
+      const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+      const validCode = (order.orderCode && order.orderCode.trim() !== '' && order.orderCode !== '코드없음') ? order.orderCode.trim() : '';
+
+      history.unshift({
+        orderCode: validCode,
+        nickname: order.nickname,
+        productName: order.productName,
+        quantity: order.quantity,
+        amount: order.amount,
+        orderDate: order.orderDate || "-",
+        pickupDate: order.pickupDate || "-",
+        dateOnly: dateStr,
+        timeOnly: timeStr,
+        time: dateStr + ' ' + timeStr
+      });
+      if(history.length > 200) history.pop();
+      localStorage.setItem('daiclo_pickup_history', JSON.stringify(history));
+      updateHistoryButtonAppearance();
+    }
+
+    window.processPickup = function(orderId) {
+      const order = ordersData.find(o => o.id === orderId);
+      if (!order) return showToast("주문을 찾을 수 없습니다.", "error");
+
+      order.status = "완료"; 
+      render();
+      saveToHistory(order);
+
+      if (!order.orderCode) {
+        showToast("주문코드가 없어 기기 내역에만 저장되었습니다.", "info");
+        return;
+      }
+
+      const targetUrl = APPS_SCRIPT_SYNC_URL + "?orderCode=" + encodeURIComponent(order.orderCode) + "&status=1&t=" + Date.now();
+      
+      fetch(targetUrl, { method: 'GET', mode: 'no-cors' })
+        .then(() => showToast(`[${order.nickname}] 처리 완료 (시트 동기화)`, "success"))
+        .catch(() => showToast(`처리 완료 (네트워크 오프라인 모드)`, "info"));
+    };
+
+    function processRawMatrix(matrix) {
+      if (!matrix || matrix.length === 0) return [];
+      let offset = (matrix[0] && matrix[0].join("").includes("주문날짜")) ? 1 : 0;
+      
+      const results = [];
+      for (let i = offset; i < matrix.length; i++) {
+        const row = matrix[i];
+        if (!row || row.length < 3) continue;
+        
+        const nickname = (row[2] || "").toString().trim();
+        if (!nickname) continue;
+
+        let statusText = (row[7] || "").toString().trim();
+        let status = (statusText.includes("완료") || statusText === "1") ? "완료" : "픽업예정";
+
+        results.push({
+          id: `ORD-${i + 1}`,
+          sheetRowIndex: i + 1,
+          orderDate: (row[0] || "").toString().trim() || "-",
+          pickupDate: (row[1] || "").toString().trim() || "-",
+          nickname: nickname,
+          productName: (row[3] || "").toString().trim(),
+          quantity: parseInt((row[4] || "1").toString().replace(/[^0-9]/g, "")) || 1,
+          amount: parseFloat((row[6] || row[5] || "0").toString().replace(/[^0-9]/g, "")) || 0,
+          status: status,
+          orderCode: (row[8] || "").toString().trim()
+        });
+      }
+      return results;
+    }
+
+    function loadGoogleSheetData(isSilent = false) {
+      if(!isSilent) showToast("데이터 갱신 중...", "info");
+      
+      const callbackName = "cb_" + Date.now() + "_" + Math.floor(Math.random()*1000);
+      const script = document.createElement("script");
+      let timeoutHandler = null;
+      
+      window[callbackName] = function(data) {
+        if (timeoutHandler) clearTimeout(timeoutHandler);
+        if(script.parentNode) script.parentNode.removeChild(script);
+        delete window[callbackName];
+        
+        if (data && data.table && data.table.rows) {
+          const matrix = data.table.rows.map(row => (row.c || []).map(c => c ? (c.f || c.v || "") : ""));
+          const parsed = processRawMatrix(matrix);
+          ordersData = parsed.length > 0 ? parsed : SAMPLE_INITIAL_ORDERS;
+          
+          const now = new Date();
+          const dateStr = now.toLocaleDateString();
+          const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          const statusElem = document.getElementById("statSourceStatus");
+          if (statusElem) statusElem.textContent = dateStr + " " + timeStr + " 갱신됨";
+          
+          render();
+        }
+      };
+
+      // 타임아웃 발생 시 로컬 샘플 데이터로 복구 보장
+      timeoutHandler = setTimeout(() => {
+        if (window[callbackName]) {
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+          if (ordersData.length === 0) {
+            ordersData = [...SAMPLE_INITIAL_ORDERS];
+            render();
+          }
+          const statusElem = document.getElementById("statSourceStatus");
+          if (statusElem) statusElem.textContent = "로컬/최신 캐시 데이터 적용됨";
+        }
+      }, 3500);
+
+      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}`;
+      script.onerror = () => {
+        if (timeoutHandler) clearTimeout(timeoutHandler);
+        if (ordersData.length === 0) {
+          ordersData = [...SAMPLE_INITIAL_ORDERS];
+          render();
+        }
+      };
+      document.body.appendChild(script);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      ordersData = [...SAMPLE_INITIAL_ORDERS];
+      loadGoogleSheetData(false);
+      updateHistoryButtonAppearance();
+
+      let autoRefreshInterval = null;
+
+      // 홈 화면 리프레시 함수 (초기화 및 데이터 동기화)
+      function resetToHomeScreen(isManual = false) {
+        clearSelectedNickname();
+        
+        // 열려 있는 모달 닫기
+        if (typeof togglePwModal === "function") togglePwModal(false);
+        if (typeof toggleHistoryModal === "function") toggleHistoryModal(false);
+        const customAlertModal = document.getElementById("customAlertModal");
+        if (customAlertModal) customAlertModal.classList.add("opacity-0", "pointer-events-none");
+        const customConfirmModal = document.getElementById("customConfirmModal");
+        if (customConfirmModal) customConfirmModal.classList.add("opacity-0", "pointer-events-none");
+
+        // 백그라운드 데이터 동기화
+        loadGoogleSheetData(true);
+
+        if (isManual) {
+          showToast("홈 화면으로 새로고침되었습니다.", "info");
+        }
+      }
+
+      // 자동 리프레시 주기 타이머 설정 (5분 = 300초)
+      function startAutoRefreshTimer() {
+        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        autoRefreshInterval = setInterval(() => {
+          resetToHomeScreen(false);
+        }, 5 * 60 * 1000);
+      }
+
+      startAutoRefreshTimer();
+
+      // 홈 리프레시 버튼 클릭 이벤트
+      const manualHomeRefreshBtn = document.getElementById("manualHomeRefreshBtn");
+      if (manualHomeRefreshBtn) {
+        manualHomeRefreshBtn.addEventListener("click", () => {
+          resetToHomeScreen(true);
+          startAutoRefreshTimer(); // 수동 클릭 시 5분 주기 타이머 재설정
+        });
+      }
+
+      // 커스텀 안내 팝업(Alert 대체) 로직
+      const customAlertModal = document.getElementById("customAlertModal");
+      const customAlertContent = document.getElementById("customAlertContent");
+      const customAlertMessage = document.getElementById("customAlertMessage");
+
+      window.showAlert = function(message) {
+        if (!customAlertModal || !customAlertContent || !customAlertMessage) return;
+        customAlertMessage.innerHTML = message;
+        customAlertModal.classList.remove("opacity-0", "pointer-events-none");
+        customAlertContent.classList.remove("scale-95");
+        if (window.lucide) lucide.createIcons();
+      };
+
+      const closeAlertBtn = document.getElementById("closeAlertBtn");
+      if (closeAlertBtn) {
+        closeAlertBtn.addEventListener("click", () => {
+          customAlertModal.classList.add("opacity-0", "pointer-events-none");
+          customAlertContent.classList.add("scale-95");
+        });
+      }
+
+      const customConfirmModal = document.getElementById("customConfirmModal");
+      const customConfirmContent = document.getElementById("customConfirmContent");
+      const customConfirmMessage = document.getElementById("customConfirmMessage");
+      const customConfirmOkBtn = document.getElementById("customConfirmOkBtn");
+      const customConfirmCancelBtn = document.getElementById("customConfirmCancelBtn");
+      let currentConfirmCallback = null;
+
+      window.showCustomConfirm = function(message, onConfirm) {
+        if (!customConfirmModal) return;
+        customConfirmMessage.textContent = message;
+        currentConfirmCallback = onConfirm;
+        customConfirmModal.classList.remove("opacity-0", "pointer-events-none");
+        customConfirmContent.classList.remove("scale-95");
+        if (window.lucide) lucide.createIcons();
+      };
+
+      const closeConfirmModal = () => {
+        customConfirmModal.classList.add("opacity-0", "pointer-events-none");
+        customConfirmContent.classList.add("scale-95");
+        currentConfirmCallback = null;
+      };
+
+      if (customConfirmCancelBtn) customConfirmCancelBtn.addEventListener("click", closeConfirmModal);
+      if (customConfirmOkBtn) {
+        customConfirmOkBtn.addEventListener("click", () => {
+          if (typeof currentConfirmCallback === "function") {
+            currentConfirmCallback();
+          }
+          closeConfirmModal();
+        });
+      }
+
+      // 검색 제어
+      const searchBtn = document.getElementById("searchNicknameBtn");
+      const searchInput = document.getElementById("nicknameSearchInput");
+      const clearBtn = document.getElementById("clearSearchBtn");
+      const resetBtn = document.getElementById("resetAllFiltersBtn");
+
+      if (searchBtn) searchBtn.addEventListener("click", executeNicknameSearch);
+      if (searchInput) {
+        searchInput.addEventListener("keydown", e => { if (e.key === "Enter") executeNicknameSearch(); });
+        searchInput.addEventListener("input", e => {
+          if (clearBtn) clearBtn.classList.toggle("hidden", !e.target.value);
+        });
+      }
+      if (clearBtn) clearBtn.addEventListener("click", clearSelectedNickname);
+      if (resetBtn) resetBtn.addEventListener("click", clearSelectedNickname);
+
+      // 비밀번호 모달 제어 (기본 비밀번호: 0718)
+      const pwModal = document.getElementById("passwordModal");
+      const pwContent = document.getElementById("passwordModalContent");
+      const pwInput = document.getElementById("adminPasswordInput");
+      let passwordTargetAction = "";
+      
+      const togglePwModal = (show) => {
+        if (!pwModal || !pwContent || !pwInput) return;
+        pwModal.classList.toggle("opacity-0", !show);
+        pwModal.classList.toggle("pointer-events-none", !show);
+        pwContent.classList.toggle("scale-95", !show);
+        if(show) { pwInput.value = ''; setTimeout(() => pwInput.focus(), 120); }
+      };
+
+      const openHistoryTriggerBtn = document.getElementById("openHistoryTriggerBtn");
+      if (openHistoryTriggerBtn) {
+        openHistoryTriggerBtn.addEventListener("click", () => {
+          passwordTargetAction = "history";
+          togglePwModal(true);
+        });
+      }
+      
+      const systemSyncBtn = document.getElementById("systemSyncBtn");
+      if (systemSyncBtn) {
+        systemSyncBtn.addEventListener("click", () => {
+          const history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
+          if (history.length > 0) {
+            showAlert("정보변경확인 후<br><span class='text-emerald-700 font-bold'>DB Update</span>가 가능합니다.");
+          } else {
+            passwordTargetAction = "refresh";
+            togglePwModal(true);
+          }
+        });
+      }
+
+      const cancelPwBtn = document.getElementById("cancelPasswordBtn");
+      if (cancelPwBtn) cancelPwBtn.addEventListener("click", () => togglePwModal(false));
+      
+      const checkPassword = () => {
+        if (!pwInput) return;
+        if(pwInput.value === "0718") {
+          togglePwModal(false);
+          
+          if (passwordTargetAction === "history") {
+            toggleHistoryModal(true);
+          } else if (passwordTargetAction === "refresh") {
+            loadGoogleSheetData(false);
+            showToast("DB Update를 시작합니다.", "info");
+          }
+        } else {
+          showToast("비밀번호가 일치하지 않습니다.", "error");
+          pwInput.value = '';
+          pwInput.focus();
+        }
+      };
+
+      const verifyPwBtn = document.getElementById("verifyPasswordBtn");
+      if (verifyPwBtn) verifyPwBtn.addEventListener("click", checkPassword);
+      if (pwInput) pwInput.addEventListener("keydown", e => { if (e.key === "Enter") checkPassword(); });
+
+      // 히스토리 모달 제어
+      const histModal = document.getElementById("historyModal");
+      const histContent = document.getElementById("historyModalContent");
+      const histList = document.getElementById("historyListContainer");
+      
+      const toggleHistoryModal = (show) => {
+        if (!histModal || !histContent) return;
+        histModal.classList.toggle("opacity-0", !show);
+        histModal.classList.toggle("pointer-events-none", !show);
+        histContent.classList.toggle("scale-95", !show);
+        if(show) renderHistory();
+      };
+
+      const closeHistBtn = document.getElementById("closeHistoryBtn");
+      if (closeHistBtn) closeHistBtn.addEventListener("click", () => toggleHistoryModal(false));
+      
+      window.deleteHistoryItem = function(index) {
+        let history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
+        history.splice(index, 1);
+        localStorage.setItem('daiclo_pickup_history', JSON.stringify(history));
+        renderHistory();
+        updateHistoryButtonAppearance();
+        showToast("선택한 내역이 삭제되었습니다.", "info");
+      };
+
+      function renderHistory() {
+        if (!histList) return;
+        let history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
+        histList.innerHTML = '';
+        if(history.length === 0) {
+          histList.innerHTML = `
+            <div class="text-center text-slate-400 py-16 flex flex-col items-center bg-white rounded-2xl border border-dashed border-slate-200 p-6">
+              <i data-lucide="clipboard-x" class="w-12 h-12 mb-3 text-slate-300 stroke-[1.5]"></i>
+              <p class="font-bold text-slate-600 text-sm">픽업 상태를 변경한 내역이 없습니다</p>
+              <p class="text-xs text-slate-400 mt-1">조회 화면에서 픽업예정 버튼을 누르면 이곳에 기록됩니다.</p>
+            </div>
+          `;
+          if (window.lucide) lucide.createIcons();
+          return;
+        }
+        
+        const listWrapper = document.createElement('div');
+        listWrapper.className = "flex flex-col gap-2.5";
+        
+        history.forEach((item, index) => {
+          const hasValidOrderCode = item.orderCode && item.orderCode.trim() !== '' && item.orderCode !== '코드없음';
+
+          listWrapper.innerHTML += `
+            <div class="bg-white border border-emerald-100/90 rounded-xl p-2.5 sm:p-3.5 shadow-xs hover:border-emerald-300 transition-all flex flex-col gap-1.5 sm:gap-2">
+              <!-- 1번째 줄: [닉네임] [주문코드] 상품명 ... [처리시간] [삭제] -->
+              <div class="flex items-center justify-between gap-1.5 sm:gap-2.5 min-w-0">
+                <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] sm:text-xs font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300/80 shrink-0">
+                    ${escapeHtml(item.nickname || "닉네임")}
+                  </span>
+                  ${hasValidOrderCode ? `
+                    <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono font-bold text-slate-600 shrink-0">
+                      <i data-lucide="hash" class="w-2.5 h-2.5 text-slate-400"></i>${escapeHtml(item.orderCode)}
+                    </span>
+                  ` : ''}
+                  <span class="text-xs sm:text-sm font-bold text-slate-800 truncate flex-1" title="${escapeHtml(item.productName || '상품명 없음')}">
+                    ${escapeHtml(item.productName || "상품명 없음")}
+                  </span>
+                </div>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <span class="text-[10px] sm:text-[11px] font-mono text-slate-400 font-semibold" title="처리일자: ${escapeHtml(item.dateOnly || '')}">${escapeHtml(item.timeOnly || '-')}</span>
+                  <button type="button" onclick="deleteHistoryItem(${index})" aria-label="내역 삭제" class="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="내역 삭제">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2번째 줄: [주문] [픽업] ... [수량 / 금액] [완료] -->
+              <div class="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-100 text-xs">
+                <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 flex-wrap">
+                  <div class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/70">
+                    <span class="text-[8px] sm:text-[9px] font-extrabold text-slate-400">주문</span>
+                    <span>${escapeHtml(item.orderDate || "-")}</span>
+                  </div>
+                  <div class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-mono text-emerald-900 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                    <span class="text-[8px] sm:text-[9px] font-extrabold text-emerald-600">픽업</span>
+                    <span class="font-bold text-emerald-800">${escapeHtml(item.pickupDate || "-")}</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                  <div class="text-[10px] sm:text-xs font-mono text-slate-600">
+                    <span class="font-bold text-slate-700">${item.quantity || 1}개</span>
+                    <span class="text-slate-300 mx-0.5">/</span>
+                    <span class="font-extrabold text-emerald-950">${Number(item.amount || 0).toLocaleString()}원</span>
+                  </div>
+                  <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-600 text-white rounded text-[9px] sm:text-[10px] font-bold">
+                    <i data-lucide="check" class="w-2.5 h-2.5 stroke-[2.5]"></i>
+                    <span>완료</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        histList.appendChild(listWrapper);
+        if (window.lucide) lucide.createIcons();
+      }
+
+      if (window.lucide) lucide.createIcons();
+    });
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
