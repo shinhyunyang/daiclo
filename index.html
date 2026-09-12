@@ -466,62 +466,80 @@
         const isComplete = order.status === "완료" || order.status === "1";
 
         const itemCard = document.createElement("div");
-        itemCard.className = `rounded-2xl transition-all p-3.5 sm:p-4.5 flex flex-col gap-2.5 ${isComplete ? 'bg-emerald-50/95 border border-emerald-200 opacity-85' : 'bg-white border-2 border-emerald-200/80 shadow-sm hover:border-emerald-400'}`;
+        itemCard.className = `rounded-2xl transition-all p-3 sm:p-4.5 flex flex-col gap-2 sm:gap-2.5 ${isComplete ? 'bg-emerald-50/95 border border-emerald-200 opacity-85' : 'bg-white border-2 border-emerald-200/80 shadow-sm hover:border-emerald-400'}`;
 
         const completedTimeText = order.completedAt || order.processedTime || "";
         const unitPrice = order.unitPrice || (order.quantity > 0 ? Math.round(order.amount / order.quantity) : order.amount);
 
         itemCard.innerHTML = `
-          <!-- 1번째 줄: 품목 / 단가 / 수량 / 합계금액 ... [완료 / 픽업예정 버튼] -->
-          <div class="flex items-center justify-between gap-3 min-w-0">
-            <div class="flex items-center gap-2 min-w-0 flex-1 flex-wrap sm:flex-nowrap">
-              <!-- 품목 -->
-              <span class="text-base sm:text-lg font-black text-slate-900 truncate shrink-0 max-w-[55%] sm:max-w-none" title="${escapeHtml(order.productName || '상품명 없음')}">
+          <!-- 1번째 라인: [품목명] (PC에서는 금액까지 포함) ... 우측 [픽업예정 / 완료 버튼] -->
+          <div class="flex items-center justify-between gap-2.5 min-w-0">
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+              <!-- 품목명 (모바일에서도 줄바꿈 없이 말줄임 또는 가독성 최우선 확보) -->
+              <span class="text-sm sm:text-base md:text-lg font-black text-slate-900 truncate" title="${escapeHtml(order.productName || '상품명 없음')}">
                 ${escapeHtml(order.productName || "상품명 없음")}
               </span>
 
-              <!-- 단가 / 수량 / 합계금액 -->
-              <div class="inline-flex items-center gap-2 shrink-0 text-sm sm:text-base font-mono">
+              <!-- PC/태블릿(sm 이상) 전용 인라인 단가/수량/합계 표시 -->
+              <div class="hidden sm:inline-flex items-center gap-2 shrink-0 text-sm md:text-base font-mono">
                 <span class="text-slate-300 font-bold select-none">/</span>
                 <span class="font-extrabold text-emerald-800 whitespace-nowrap">${Number(unitPrice).toLocaleString()}원</span>
                 <span class="text-slate-300 font-bold select-none">/</span>
                 <span class="font-extrabold text-emerald-800 whitespace-nowrap">${order.quantity}개</span>
                 <span class="text-slate-300 font-bold select-none">/</span>
-                <span class="font-black text-emerald-950 tracking-tight whitespace-nowrap text-base sm:text-lg">${Number(order.amount).toLocaleString()}원</span>
+                <span class="font-black text-emerald-950 tracking-tight whitespace-nowrap text-base md:text-lg">${Number(order.amount).toLocaleString()}원</span>
               </div>
             </div>
 
-            <!-- 우측 액션 버튼 및 완료 시간 -->
-            <div class="shrink-0 flex flex-col items-end justify-center">
+            <!-- 우측 액션 버튼 (픽업예정 / 완료) -->
+            <div class="shrink-0 flex items-center justify-end">
               ${isComplete 
                 ? `
-                  <div class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-1 bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs">
-                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-700"></i>
+                  <div class="px-2.5 py-1 sm:px-3 sm:py-1 rounded-lg text-[11px] sm:text-xs font-extrabold flex items-center gap-1 bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs">
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-700"></i>
                     <span>완료</span>
                   </div>
                 `
-                : `<button type="button" onclick="window.processPickup('${order.id}')" class="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-1.5 shadow-sm border-2 bg-white text-emerald-800 border-emerald-600 hover:bg-emerald-50 active:scale-95 cursor-pointer"><i data-lucide="check" class="w-4 h-4 text-emerald-600 stroke-[3]"></i><span>픽업예정</span></button>`
+                : `<button type="button" onclick="window.processPickup('${order.id}')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1 shadow-2xs border border-emerald-500 bg-white text-emerald-800 hover:bg-emerald-50 active:scale-95 cursor-pointer"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]"></i><span>픽업</span></button>`
               }
             </div>
           </div>
 
-          <!-- 2번째 줄: 주문일자 / 픽업예정일자 및 우측 일자/시각 (동일 높이 정렬) -->
-          <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100/80 text-xs sm:text-sm">
-            <div class="flex items-center gap-2.5 shrink-0 flex-wrap">
-              <div class="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-mono">
+          <!-- 모바일(sm 미만) 전용 단가/수량/합계금액 전용 바 (줄바꿈 없이 1줄로 단정하게 정리) -->
+          <div class="flex sm:hidden items-center justify-between gap-1.5 bg-slate-50/90 px-2.5 py-1.5 rounded-xl border border-slate-200/60 text-xs font-mono">
+            <div class="flex items-center gap-1 text-slate-600 font-medium">
+              <span class="text-[10px] text-slate-400 font-sans font-bold">단가</span>
+              <span class="font-bold text-slate-800">${Number(unitPrice).toLocaleString()}원</span>
+            </div>
+            <span class="text-slate-300 select-none text-[10px]">/</span>
+            <div class="flex items-center gap-1 text-slate-600 font-medium">
+              <span class="text-[10px] text-slate-400 font-sans font-bold">수량</span>
+              <span class="font-bold text-emerald-700">${order.quantity}개</span>
+            </div>
+            <span class="text-slate-300 select-none text-[10px]">/</span>
+            <div class="flex items-center gap-1 text-slate-900">
+              <span class="text-[10px] text-slate-400 font-sans font-bold">합계</span>
+              <span class="font-black text-emerald-900 text-xs">${Number(order.amount).toLocaleString()}원</span>
+            </div>
+          </div>
+
+          <!-- 하단 라인: 주문일자 / 픽업예정일자 및 우측 일자/시각 (모바일 & PC 공통 일치) -->
+          <div class="flex items-center justify-between gap-2 pt-1.5 sm:pt-2 border-t border-slate-100/80 text-[11px] sm:text-xs md:text-sm">
+            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+              <div class="inline-flex items-center gap-1 font-mono">
                 <span class="font-bold text-slate-400">주문 :</span>
-                <span class="font-medium text-slate-600">${escapeHtml(order.orderDate || "-")}</span>
+                <span class="font-medium text-slate-600 whitespace-nowrap">${escapeHtml(order.orderDate || "-")}</span>
               </div>
               <span class="text-slate-200 select-none text-xs">|</span>
-              <div class="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-mono">
+              <div class="inline-flex items-center gap-1 font-mono">
                 <span class="font-bold text-emerald-600">픽업예정 :</span>
-                <span class="font-bold text-emerald-800">${escapeHtml(order.pickupDate || "-")}</span>
+                <span class="font-bold text-emerald-800 whitespace-nowrap">${escapeHtml(order.pickupDate || "-")}</span>
               </div>
             </div>
 
-            <!-- 완료 일자/시각: '완료 :' 텍스트 삭제 및 주문일자와 동일 높이(우측 정렬) 배치 -->
+            <!-- 완료 시각 (주문일자와 같은 높이에 우측 정렬) -->
             ${isComplete && completedTimeText ? `
-              <div class="text-[11px] sm:text-xs font-mono font-medium text-emerald-800 shrink-0 select-all tracking-tight">
+              <div class="text-[10px] sm:text-xs font-mono font-medium text-emerald-800 shrink-0 select-all tracking-tight text-right">
                 ${escapeHtml(completedTimeText)}
               </div>
             ` : ''}
