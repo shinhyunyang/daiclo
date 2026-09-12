@@ -37,7 +37,8 @@
   <header class="bg-white/90 backdrop-blur-md border-b border-emerald-100 sticky top-0 z-30 shadow-sm">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="badge-logo px-4 py-1.5 sm:px-5 sm:py-2">
+        <button id="headerLogoBtn" type="button" title="홈 화면으로 이동 및 새로고침" aria-label="홈 화면으로 이동 및 새로고침"
+          class="badge-logo px-4 py-1.5 sm:px-5 sm:py-2 hover:opacity-90 active:scale-95 transition-all cursor-pointer">
           <div class="flex items-center tracking-wider font-extrabold font-brand text-lg sm:text-2xl text-white select-none">
             <span>D</span>
             <span class="relative mx-[0.5px]">
@@ -47,8 +48,8 @@
             <span>ICLO</span>
             <span class="text-[9px] sm:text-[11px] ml-1 font-sans font-bold border border-emerald-300 rounded-full w-3.5 h-3.5 flex items-center justify-center text-emerald-200">R</span>
           </div>
-        </div>
-        <span class="text-sm sm:text-base font-extrabold text-emerald-900 tracking-tight ml-1">송파헬리오시티점</span>
+        </button>
+        <span class="text-2xl sm:text-3xl font-black text-emerald-900 tracking-tight ml-2">송파헬리오시티점</span>
       </div>
 
     </div>
@@ -92,9 +93,9 @@
             </button>
           </div>
 
-          <div id="matchingChipsContainer" class="hidden flex flex-wrap items-center gap-2 pt-2">
-            <span class="text-xs text-emerald-200/90 font-bold">닉네임 선택:</span>
-            <div id="nicknameChipList" class="flex flex-wrap gap-1.5 items-center"></div>
+          <!-- 심플하고 정돈된 닉네임 선택/표시 영역 -->
+          <div id="matchingChipsContainer" class="hidden pt-1 transition-all">
+            <div id="nicknameChipList" class="w-full"></div>
           </div>
         </div>
       </div>
@@ -117,8 +118,8 @@
         <div class="w-16 h-16 bg-rose-900/40 rounded-2xl flex items-center justify-center mx-auto mb-4 text-rose-300 border border-rose-800/50">
           <i data-lucide="search-x" class="w-8 h-8"></i>
         </div>
-        <h3 class="text-base sm:text-lg font-bold text-white">일치하는 주문 내역이 없습니다</h3>
-        <p class="text-xs sm:text-sm text-emerald-200 mt-2">입력하신 닉네임 철자를 다시 한 번 확인해주세요.</p>
+        <h3 class="text-base sm:text-lg font-bold text-white">일치하는 닉네임이 없습니다</h3>
+        <p class="text-xs sm:text-sm text-emerald-200 mt-2">주문하신 닉네임으로 다시 입력해주세요</p>
         <button id="resetAllFiltersBtn" type="button" class="mt-5 px-5 py-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer">
           초기화
         </button>
@@ -132,23 +133,12 @@
     <span id="toastMessage"></span>
   </div>
 
-  <!-- 화면 왼쪽 하단: 갱신 시각 표시 뱃지 -->
-  <aside aria-label="데이터 동기화 상태" class="fixed bottom-4 sm:bottom-6 left-4 sm:left-6 z-30 flex items-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 bg-white/95 backdrop-blur-md border border-emerald-200/80 rounded-2xl shadow-md text-emerald-900 select-none pointer-events-auto max-w-[50vw] sm:max-w-none truncate">
-    <div id="statSourceStatus" class="text-[10px] sm:text-[11px] font-semibold text-emerald-700/80 truncate">데이터 준비 중...</div>
-  </aside>
-
-  <!-- 플로팅 버튼 그룹 -->
-  <div class="fixed bottom-6 right-6 z-40 flex flex-col sm:flex-row items-end sm:items-center gap-3">
-    <!-- DB UPDATE 플로팅 버튼 -->
-    <button id="systemSyncBtn" class="pl-4 pr-5 py-3.5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 border border-emerald-200 cursor-pointer bg-white text-emerald-800 hover:bg-emerald-50">
-      <i data-lucide="refresh-ccw" class="w-5 h-5 text-emerald-600"></i>
-      <span class="font-bold text-sm tracking-wide">DB UPDATE</span>
-    </button>
-    
-    <!-- 정보변경(히스토리) 플로팅 버튼 -->
-    <button id="openHistoryTriggerBtn" class="pl-4 pr-5 py-3.5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.1)] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2.5 border border-emerald-200 cursor-pointer bg-white text-emerald-800 hover:bg-emerald-50">
-      <i data-lucide="clipboard-list" class="w-5 h-5 text-emerald-600"></i>
-      <span class="font-bold text-sm tracking-wide">정보변경확인</span>
+  <!-- 화면 왼쪽 하단: 갱신 시각 및 컨트롤 버튼 바 -->
+  <div class="fixed bottom-4 sm:bottom-6 left-4 sm:left-6 z-40 flex flex-wrap items-center gap-2 sm:gap-2.5 select-none pointer-events-auto max-w-[calc(100vw-2rem)]">
+    <!-- 갱신 시각 표시 뱃지 -->
+    <button id="systemSyncBtn" type="button" class="px-3.5 py-2.5 bg-white/95 backdrop-blur-md border border-emerald-200/80 rounded-2xl shadow-sm text-emerald-800 hover:bg-emerald-50 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer text-xs sm:text-sm font-bold">
+      <i data-lucide="refresh-ccw" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600"></i>
+      <span class="tracking-tight">DB UPDATE</span>
     </button>
   </div>
 
@@ -161,7 +151,7 @@
       <h3 class="text-xl font-extrabold text-slate-800 mb-2">관리자 비밀번호</h3>
       <p class="text-xs text-slate-500 mb-6">내역을 확인하려면 비밀번호를 입력해주세요.</p>
       
-      <input type="password" id="adminPasswordInput" class="w-full border-2 border-emerald-100 bg-slate-50 rounded-xl p-4 text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors mb-6" placeholder="****" maxlength="4">
+      <input type="password" id="adminPasswordInput" class="w-full border-2 border-emerald-100 bg-slate-50 rounded-xl p-4 text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:border-emerald-500 focus:bg-white transition-colors mb-6" placeholder="****" maxlength="30">
       
       <div class="flex gap-2 justify-center">
         <button id="cancelPasswordBtn" type="button" class="flex-1 px-4 py-3 text-slate-600 bg-slate-100 hover:bg-slate-200 font-bold rounded-xl transition-colors">취소</button>
@@ -230,19 +220,22 @@
     </div>
   </div>
 
+  <!-- Apps Script 백그라운드 완벽 실행용 숨김 아이프레임 -->
+  <iframe id="appsScriptHiddenTarget" name="appsScriptHiddenTarget" style="display:none; width:0; height:0; border:0;"></iframe>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, collection, addDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     let ordersData = [];
     let searchQuery = "";
     let activeSelectedNickname = "";
     let multiNicknameChoices = [];
-    let pickupHistoryList = [];
+    let adminPassword = "0718"; // 구글 시트 '설정' 탭 동기화 전 기본 비밀번호
 
     const SHEET_ID = "11OG6u2i64D6exMiBgqGbkq-wrmxrYrVfLSzbYsBoXC8";
-    const APPS_SCRIPT_SYNC_URL = localStorage.getItem('daiclo_sync_url') || "https://script.google.com/macros/s/AKfycbzTzeBSyjwijH8ps3xXSYa4bW8BO2_Z7iwBQHixcsQ9Sx1LhCKxtfnVZl5bbP1DzV-O/exec";
+    const APPS_SCRIPT_SYNC_URL = "https://script.google.com/macros/s/AKfycbxKcKIru_cK2eeOLaBixaDRCUDZB5yJulkFvK0zOG4yOJPLwaF065MKcYAIkMa90yEi/exec";
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'daiclo-order-sync';
     let db = null;
@@ -251,20 +244,15 @@
 
     // 미리보기 및 네트워크 지연 대비 샘플 데이터
     const SAMPLE_INITIAL_ORDERS = [
-      { id: 'ORD-1', sheetRowIndex: 1, orderDate: '2026.09.08', pickupDate: '2026.09.11', nickname: '헬리오1234', productName: 'DAICLO 프리미엄 에어로 쿨링 셔츠', quantity: 2, amount: 58000, status: '픽업예정', orderCode: 'DC-9011' },
-      { id: 'ORD-2', sheetRowIndex: 2, orderDate: '2026.09.09', pickupDate: '2026.09.11', nickname: '헬리오1234', productName: 'DAICLO 컴포트 슬랙스 네이비 (L)', quantity: 1, amount: 39000, status: '픽업예정', orderCode: 'DC-9012' },
-      { id: 'ORD-3', sheetRowIndex: 3, orderDate: '2026.09.07', pickupDate: '2026.09.10', nickname: '송파러버', productName: 'DAICLO 방수 윈드브레이커 자켓', quantity: 1, amount: 72000, status: '완료', orderCode: 'DC-8842' },
-      { id: 'ORD-4', sheetRowIndex: 4, orderDate: '2026.09.10', pickupDate: '2026.09.12', nickname: '1234', productName: '데일리 오가닉 코튼 티셔츠 3팩', quantity: 1, amount: 29900, status: '픽업예정', orderCode: 'DC-9130' }
+      { id: 'ORD-1', sheetRowIndex: 1, orderDate: '2026.09.08', pickupDate: '2026.09.11', nickname: '헬리오1234', productName: 'DAICLO 프리미엄 에어로 쿨링 셔츠', quantity: 2, amount: 58000, status: '픽업예정' },
+      { id: 'ORD-2', sheetRowIndex: 2, orderDate: '2026.09.09', pickupDate: '2026.09.11', nickname: '헬리오1234', productName: 'DAICLO 컴포트 슬랙스 네이비 (L)', quantity: 1, amount: 39000, status: '픽업예정' },
+      { id: 'ORD-3', sheetRowIndex: 3, orderDate: '2026.09.07', pickupDate: '2026.09.10', nickname: '송파러버', productName: 'DAICLO 방수 윈드브레이커 자켓', quantity: 1, amount: 72000, status: '완료' },
+      { id: 'ORD-4', sheetRowIndex: 4, orderDate: '2026.09.10', pickupDate: '2026.09.12', nickname: '1234', productName: '데일리 오가닉 코튼 티셔츠 3팩', quantity: 1, amount: 29900, status: '픽업예정' }
     ];
 
     async function initCloudSync() {
       try {
-        if (typeof __firebase_config === 'undefined') {
-          pickupHistoryList = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
-          syncCompletedOrdersWithHistory();
-          updateHistoryButtonAppearance();
-          return;
-        }
+        if (typeof __firebase_config === 'undefined') return;
 
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
@@ -278,62 +266,9 @@
           const cred = await signInAnonymously(auth);
           currentUser = cred.user;
         }
-
-        if (!currentUser) return;
-
-        // 모든 기기 간 실시간 픽업 내역 공유 리스너 등록
-        const historyColl = collection(db, 'artifacts', appId, 'public', 'data', 'pickup_history');
-        onSnapshot(historyColl, (snapshot) => {
-          pickupHistoryList = snapshot.docs.map(docSnap => ({
-            docId: docSnap.id,
-            ...docSnap.data()
-          }));
-
-          // 최신 처리 순으로 메모리 정렬
-          pickupHistoryList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-          // 주문 목록 상태 및 버튼 색상 동기화
-          syncCompletedOrdersWithHistory();
-          updateHistoryButtonAppearance();
-          renderHistory();
-          renderOrders();
-        }, (error) => {
-          console.warn("Cloud sync error:", error);
-          pickupHistoryList = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
-          syncCompletedOrdersWithHistory();
-          updateHistoryButtonAppearance();
-          renderHistory();
-        });
       } catch (err) {
         console.warn("Init cloud sync failed:", err);
-        pickupHistoryList = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
-        syncCompletedOrdersWithHistory();
-        updateHistoryButtonAppearance();
       }
-    }
-
-    function syncCompletedOrdersWithHistory() {
-      if (!ordersData || ordersData.length === 0 || !pickupHistoryList) return;
-
-      const historyCodeSet = new Set();
-      const historyKeySet = new Set();
-
-      pickupHistoryList.forEach(item => {
-        if (item.orderCode && item.orderCode !== '코드없음') {
-          historyCodeSet.add(item.orderCode.trim());
-        }
-        if (item.nickname && item.productName) {
-          historyKeySet.add(`${item.nickname.trim()}_${item.productName.trim()}_${(item.orderDate || '').trim()}`);
-        }
-      });
-
-      ordersData.forEach(order => {
-        const hasCode = order.orderCode && order.orderCode.trim() !== '' && order.orderCode !== '코드없음';
-        const key = `${(order.nickname || '').trim()}_${(order.productName || '').trim()}_${(order.orderDate || '').trim()}`;
-        if ((hasCode && historyCodeSet.has(order.orderCode.trim())) || historyKeySet.has(key)) {
-          order.status = "완료";
-        }
-      });
     }
 
     function showToast(message, type = "success") {
@@ -369,32 +304,94 @@
       
       chipContainer.innerHTML = "";
 
-      if (activeSelectedNickname || multiNicknameChoices.length === 0) {
-        container.classList.add("hidden");
+      // 1) 닉네임이 최종 선택된 경우: 심플하고 세련된 단일 인포 바 형태로 표시
+      if (activeSelectedNickname) {
+        container.classList.remove("hidden");
+        const count = ordersData.filter(o => (o.nickname || "").toLowerCase() === activeSelectedNickname.toLowerCase()).length;
+
+        const selectedBadge = document.createElement("div");
+        selectedBadge.className = "inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 backdrop-blur-md border border-emerald-300/30 pl-3 pr-2 py-1.5 rounded-full shadow-sm transition-all text-white animate-in fade-in duration-200";
+        selectedBadge.innerHTML = `
+          <div class="w-5 h-5 rounded-full bg-emerald-400/20 text-emerald-300 flex items-center justify-center shrink-0">
+            <i data-lucide="check" class="w-3.5 h-3.5 stroke-[2.5]"></i>
+          </div>
+          <span class="text-xs font-semibold text-emerald-200/90 select-none">선택 회원</span>
+          <span class="text-sm font-extrabold text-white tracking-tight">${escapeHtml(activeSelectedNickname)}</span>
+          <span class="text-[11px] font-bold font-mono bg-emerald-950/60 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-600/40">${count}건</span>
+          <button type="button" id="deselectNicknameBtn" title="선택 해제 및 목록 다시보기" aria-label="선택 해제" class="ml-0.5 w-6 h-6 rounded-full hover:bg-white/20 active:scale-90 flex items-center justify-center text-emerald-200 hover:text-white transition-all cursor-pointer">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        `;
+
+        // X 버튼 누르면 선택 해제 후 후보 목록으로 복귀
+        const deselectBtn = selectedBadge.querySelector("#deselectNicknameBtn");
+        if (deselectBtn) {
+          deselectBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const allNicknames = [...new Set(ordersData.map(o => (o.nickname || "").trim()).filter(Boolean))];
+            const input = document.getElementById("nicknameSearchInput");
+            const val = input ? input.value.trim() : "";
+            multiNicknameChoices = allNicknames.filter(n => n.toLowerCase().includes(val.toLowerCase()));
+            activeSelectedNickname = "";
+            render();
+          });
+        }
+
+        chipContainer.appendChild(selectedBadge);
+        if (window.lucide) lucide.createIcons();
         return;
       }
 
-      container.classList.remove("hidden");
-      multiNicknameChoices.slice(0, 30).forEach(nick => {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "text-xs px-3.5 py-2 rounded-xl font-medium transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 bg-white/20 hover:bg-white/35 text-white backdrop-blur-xs border border-white/20 shadow-xs";
-        
-        const count = ordersData.filter(o => (o.nickname || "").toLowerCase() === nick.toLowerCase()).length;
-        chip.innerHTML = `
-          <span class="truncate max-w-[150px] font-bold text-sm">${escapeHtml(nick)}</span>
-          <span class="text-[10px] bg-black/40 text-emerald-200 px-1.5 py-0.5 rounded-md font-mono font-bold">${count}건</span>
+      // 2) 검색 결과 복수 후보 목록이 있을 경우: 닉네임 선택 라벨 아래부터 정렬
+      if (multiNicknameChoices && multiNicknameChoices.length > 0) {
+        container.classList.remove("hidden");
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "flex flex-col gap-2 w-full";
+
+        // 상단 안내 라벨 행
+        const labelRow = document.createElement("div");
+        labelRow.className = "flex items-center gap-1.5 text-xs text-emerald-200/90 font-bold select-none";
+        labelRow.innerHTML = `
+          <i data-lucide="user" class="w-3.5 h-3.5 text-emerald-300"></i>
+          <span>닉네임 선택</span>
+          <span class="text-[11px] font-mono font-bold text-emerald-300 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-700/50">${multiNicknameChoices.length}건 검색됨</span>
         `;
-        chip.addEventListener("click", () => selectNickname(nick));
-        chipContainer.appendChild(chip);
-      });
+        wrapper.appendChild(labelRow);
+
+        // 라벨 아래부터 나열되는 닉네임 버튼 목록 영역 (스크롤 없이 전체 노출)
+        const chipsList = document.createElement("div");
+        chipsList.className = "flex flex-wrap items-center gap-2 py-0.5";
+
+        multiNicknameChoices.forEach(nick => {
+          const count = ordersData.filter(o => (o.nickname || "").toLowerCase() === nick.toLowerCase()).length;
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "text-xs px-3 py-1.5 rounded-full font-medium bg-white/15 hover:bg-white/25 active:scale-95 text-white backdrop-blur-xs border border-white/20 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer";
+          chip.innerHTML = `
+            <span class="truncate max-w-[140px] font-bold text-xs sm:text-sm">${escapeHtml(nick)}</span>
+            <span class="text-[10px] bg-black/30 text-emerald-200 px-1.5 py-0.2 rounded-full font-mono font-bold">${count}건</span>
+          `;
+          chip.addEventListener("click", () => selectNickname(nick));
+          chipsList.appendChild(chip);
+        });
+
+        wrapper.appendChild(chipsList);
+        chipContainer.appendChild(wrapper);
+
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      // 표시할 내역이 없는 경우
+      container.classList.add("hidden");
     }
 
     function selectNickname(nick) {
       const searchInput = document.getElementById("nicknameSearchInput");
       activeSelectedNickname = nick;
       searchQuery = nick;
-      multiNicknameChoices = [];
+
       if (searchInput) searchInput.value = nick;
       const clearBtn = document.getElementById("clearSearchBtn");
       if (clearBtn) clearBtn.classList.remove("hidden");
@@ -421,16 +418,13 @@
       const allNicknames = [...new Set(ordersData.map(o => (o.nickname || "").trim()).filter(Boolean))];
       const matching = allNicknames.filter(n => n.toLowerCase().includes(val.toLowerCase()));
 
-      if (matching.length === 1 && matching[0].toLowerCase() === val.toLowerCase()) {
-        selectNickname(matching[0]);
-        return;
-      }
-
       activeSelectedNickname = "";
       multiNicknameChoices = matching;
       render();
       if(matching.length > 0) {
         showToast(`${matching.length}건 검색됨. 하단 칩을 클릭하세요.`, "info");
+      } else {
+        showToast("일치하는 닉네임이 없습니다. 주문하신 닉네임으로 다시 입력해주세요", "error");
       }
     }
 
@@ -470,55 +464,67 @@
 
       filtered.forEach((order) => {
         const isComplete = order.status === "완료" || order.status === "1";
-        const hasValidOrderCode = order.orderCode && order.orderCode.trim() !== '' && order.orderCode !== '코드없음';
 
         const itemCard = document.createElement("div");
-        itemCard.className = `rounded-2xl transition-all p-3.5 sm:p-4.5 flex flex-col gap-2.5 ${isComplete ? 'bg-emerald-50/95 border border-emerald-200 opacity-75' : 'bg-white border-2 border-emerald-200/80 shadow-sm hover:border-emerald-400'}`;
+        itemCard.className = `rounded-2xl transition-all p-3.5 sm:p-4.5 flex flex-col gap-2.5 ${isComplete ? 'bg-emerald-50/95 border border-emerald-200 opacity-85' : 'bg-white border-2 border-emerald-200/80 shadow-sm hover:border-emerald-400'}`;
+
+        const completedTimeText = order.completedAt || order.processedTime || "";
+        const unitPrice = order.unitPrice || (order.quantity > 0 ? Math.round(order.amount / order.quantity) : order.amount);
 
         itemCard.innerHTML = `
-          <!-- 1번째 줄: [주문코드] 품목 / 수량 / 금액 ... [완료 / 픽업예정 버튼] -->
+          <!-- 1번째 줄: 품목 / 단가 / 수량 / 합계금액 ... [완료 / 픽업예정 버튼] -->
           <div class="flex items-center justify-between gap-3 min-w-0">
             <div class="flex items-center gap-2 min-w-0 flex-1 flex-wrap sm:flex-nowrap">
-              ${hasValidOrderCode ? `
-                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[11px] sm:text-xs font-mono font-bold text-slate-600 shrink-0">
-                  <i data-lucide="hash" class="w-3 h-3 text-slate-400"></i>${escapeHtml(order.orderCode)}
-                </span>
-              ` : ''}
-              
-              <!-- 품목명 및 수량 / 금액 -->
-              <span class="text-base sm:text-lg font-extrabold text-slate-900 truncate shrink-0 max-w-[55%] sm:max-w-none" title="${escapeHtml(order.productName || '상품명 없음')}">
+              <!-- 품목 -->
+              <span class="text-base sm:text-lg font-black text-slate-900 truncate shrink-0 max-w-[55%] sm:max-w-none" title="${escapeHtml(order.productName || '상품명 없음')}">
                 ${escapeHtml(order.productName || "상품명 없음")}
               </span>
 
-              <div class="inline-flex items-center gap-2 shrink-0 text-base sm:text-lg">
+              <!-- 단가 / 수량 / 합계금액 -->
+              <div class="inline-flex items-center gap-2 shrink-0 text-sm sm:text-base font-mono">
                 <span class="text-slate-300 font-bold select-none">/</span>
-                <span class="font-extrabold text-emerald-800 font-mono">${order.quantity}개</span>
+                <span class="font-extrabold text-emerald-800 whitespace-nowrap">${Number(unitPrice).toLocaleString()}원</span>
                 <span class="text-slate-300 font-bold select-none">/</span>
-                <span class="font-black text-emerald-950 font-mono tracking-tight">${Number(order.amount).toLocaleString()}원</span>
+                <span class="font-extrabold text-emerald-800 whitespace-nowrap">${order.quantity}개</span>
+                <span class="text-slate-300 font-bold select-none">/</span>
+                <span class="font-black text-emerald-950 tracking-tight whitespace-nowrap text-base sm:text-lg">${Number(order.amount).toLocaleString()}원</span>
               </div>
             </div>
 
-            <!-- 우측 액션 버튼 -->
-            <div class="shrink-0">
+            <!-- 우측 액션 버튼 및 완료 시간 -->
+            <div class="shrink-0 flex flex-col items-end justify-center">
               ${isComplete 
-                ? `<div class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-1 bg-slate-100 text-slate-400 border border-slate-200"><i data-lucide="check-circle-2" class="w-4 h-4"></i><span>완료</span></div>`
+                ? `
+                  <div class="px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold flex items-center gap-1 bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-700"></i>
+                    <span>완료</span>
+                  </div>
+                `
                 : `<button type="button" onclick="window.processPickup('${order.id}')" class="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center gap-1.5 shadow-sm border-2 bg-white text-emerald-800 border-emerald-600 hover:bg-emerald-50 active:scale-95 cursor-pointer"><i data-lucide="check" class="w-4 h-4 text-emerald-600 stroke-[3]"></i><span>픽업예정</span></button>`
               }
             </div>
           </div>
 
-          <!-- 2번째 줄: [주문일자] [픽업예정일자] -->
-          <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs sm:text-sm">
-            <div class="flex items-center gap-2 shrink-0 flex-wrap">
-              <div class="inline-flex items-center gap-1 text-[11px] sm:text-xs font-mono text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-                <span class="text-[10px] sm:text-[11px] font-bold text-slate-400">주문</span>
-                <span class="font-medium">${escapeHtml(order.orderDate || "-")}</span>
+          <!-- 2번째 줄: 주문일자 / 픽업예정일자 및 우측 일자/시각 (동일 높이 정렬) -->
+          <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100/80 text-xs sm:text-sm">
+            <div class="flex items-center gap-2.5 shrink-0 flex-wrap">
+              <div class="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-mono">
+                <span class="font-bold text-slate-400">주문 :</span>
+                <span class="font-medium text-slate-600">${escapeHtml(order.orderDate || "-")}</span>
               </div>
-              <div class="inline-flex items-center gap-1 text-[11px] sm:text-xs font-mono text-emerald-900 bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-2xs">
-                <span class="text-[10px] sm:text-[11px] font-extrabold text-emerald-700">픽업</span>
-                <span class="font-bold text-emerald-900">${escapeHtml(order.pickupDate || "-")}</span>
+              <span class="text-slate-200 select-none text-xs">|</span>
+              <div class="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-mono">
+                <span class="font-bold text-emerald-600">픽업예정 :</span>
+                <span class="font-bold text-emerald-800">${escapeHtml(order.pickupDate || "-")}</span>
               </div>
             </div>
+
+            <!-- 완료 일자/시각: '완료 :' 텍스트 삭제 및 주문일자와 동일 높이(우측 정렬) 배치 -->
+            ${isComplete && completedTimeText ? `
+              <div class="text-[11px] sm:text-xs font-mono font-medium text-emerald-800 shrink-0 select-all tracking-tight">
+                ${escapeHtml(completedTimeText)}
+              </div>
+            ` : ''}
           </div>
         `;
         container.appendChild(itemCard);
@@ -531,218 +537,267 @@
       renderOrders();
     }
 
-    function updateHistoryButtonAppearance() {
-      const btn = document.getElementById("openHistoryTriggerBtn");
-      if (!btn) return;
-      
-      const hasHistory = pickupHistoryList && pickupHistoryList.length > 0;
-      if (hasHistory) {
-        btn.className = "px-3 py-2 sm:pl-4 sm:pr-5 sm:py-3.5 rounded-xl sm:rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 sm:gap-2.5 border border-emerald-500 cursor-pointer bg-emerald-600 text-white hover:bg-emerald-700";
-        btn.innerHTML = '<i data-lucide="clipboard-list" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-emerald-100"></i><span class="font-bold text-[11px] sm:text-sm tracking-tight sm:tracking-wide">정보변경확인</span>';
-      } else {
-        btn.className = "px-3 py-2 sm:pl-4 sm:pr-5 sm:py-3.5 rounded-xl sm:rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 sm:gap-2.5 border border-emerald-200 cursor-pointer bg-white text-emerald-800 hover:bg-emerald-50";
-        btn.innerHTML = '<i data-lucide="clipboard-list" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-emerald-600"></i><span class="font-bold text-[11px] sm:text-sm tracking-tight sm:tracking-wide">정보변경확인</span>';
-      }
-      if(window.lucide) lucide.createIcons();
-    }
-
-    window.deleteHistoryItem = async function(idOrIndex) {
-      if (db && currentUser && typeof idOrIndex === 'string' && idOrIndex.length > 5) {
-        try {
-          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'pickup_history', idOrIndex));
-          showToast("공유 내역에서 삭제되었습니다.", "info");
-          return;
-        } catch (e) {
-          console.warn("Cloud delete error:", e);
-        }
-      }
-
-      const idx = typeof idOrIndex === 'number' 
-        ? idOrIndex 
-        : pickupHistoryList.findIndex(item => item.docId === idOrIndex);
-
-      if (idx >= 0) {
-        pickupHistoryList.splice(idx, 1);
-        localStorage.setItem('daiclo_pickup_history', JSON.stringify(pickupHistoryList));
-        renderHistory();
-        updateHistoryButtonAppearance();
-        showToast("선택한 내역이 삭제되었습니다.", "info");
-      }
-    };
-
-    function renderHistory() {
-      const histList = document.getElementById("historyListContainer");
-      if (!histList) return;
-      
-      histList.innerHTML = '';
-      if(!pickupHistoryList || pickupHistoryList.length === 0) {
-        histList.innerHTML = `
-          <div class="text-center text-slate-400 py-16 flex flex-col items-center bg-white rounded-2xl border border-dashed border-slate-200 p-6">
-            <i data-lucide="clipboard-x" class="w-12 h-12 mb-3 text-slate-300 stroke-[1.5]"></i>
-            <p class="font-bold text-slate-600 text-sm">픽업 상태를 변경한 내역이 없습니다</p>
-            <p class="text-xs text-slate-400 mt-1">조회 화면에서 픽업예정 버튼을 누르면 모든 기기에 실시간 공유됩니다.</p>
-          </div>
-        `;
-        if (window.lucide) lucide.createIcons();
-        return;
-      }
-      
-      const listWrapper = document.createElement('div');
-      listWrapper.className = "flex flex-col gap-2.5";
-      
-      pickupHistoryList.forEach((item, index) => {
-        const hasValidOrderCode = item.orderCode && item.orderCode.trim() !== '' && item.orderCode !== '코드없음';
-        const targetDeleteKey = item.docId ? `'${item.docId}'` : index;
-
-        listWrapper.innerHTML += `
-          <div class="bg-white border border-emerald-100/90 rounded-xl p-2.5 sm:p-3.5 shadow-xs hover:border-emerald-300 transition-all flex flex-col gap-1.5 sm:gap-2">
-            <!-- 1번째 줄: [닉네임] [주문코드] 상품명 ... [처리시간] [삭제] -->
-            <div class="flex items-center justify-between gap-1.5 sm:gap-2.5 min-w-0">
-              <div class="flex items-center gap-1.5 min-w-0 flex-1">
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] sm:text-xs font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300/80 shrink-0">
-                  ${escapeHtml(item.nickname || "닉네임")}
-                </span>
-                ${hasValidOrderCode ? `
-                  <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono font-bold text-slate-600 shrink-0">
-                    <i data-lucide="hash" class="w-2.5 h-2.5 text-slate-400"></i>${escapeHtml(item.orderCode)}
-                  </span>
-                ` : ''}
-                <span class="text-xs sm:text-sm font-bold text-slate-800 truncate flex-1" title="${escapeHtml(item.productName || '상품명 없음')}">
-                  ${escapeHtml(item.productName || "상품명 없음")}
-                </span>
-              </div>
-
-              <div class="flex items-center gap-1.5 shrink-0">
-                <span class="text-[10px] sm:text-[11px] font-mono text-slate-400 font-semibold" title="처리일자: ${escapeHtml(item.dateOnly || '')}">${escapeHtml(item.timeOnly || '-')}</span>
-                <button type="button" onclick="window.deleteHistoryItem(${targetDeleteKey})" aria-label="내역 삭제" class="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer" title="내역 삭제">
-                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                </button>
-              </div>
-            </div>
-
-            <!-- 2번째 줄: [주문] [픽업] ... [수량 / 금액] [완료] -->
-            <div class="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-100 text-xs">
-              <div class="flex items-center gap-1 sm:gap-1.5 shrink-0 flex-wrap">
-                <div class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-mono text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200/70">
-                  <span class="text-[8px] sm:text-[9px] font-extrabold text-slate-400">주문</span>
-                  <span>${escapeHtml(item.orderDate || "-")}</span>
-                </div>
-                <div class="inline-flex items-center gap-0.5 text-[10px] sm:text-[11px] font-mono text-emerald-900 bg-white px-2.5 py-0.5 rounded border border-emerald-300 shadow-2xs">
-                  <span class="text-[8px] sm:text-[9px] font-extrabold text-emerald-700">픽업</span>
-                  <span class="font-bold text-emerald-900">${escapeHtml(item.pickupDate || "-")}</span>
-                </div>
-              </div>
-
-              <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-                <div class="text-[10px] sm:text-xs font-mono text-slate-600">
-                  <span class="font-bold text-slate-700">${item.quantity || 1}개</span>
-                  <span class="text-slate-300 mx-0.5">/</span>
-                  <span class="font-extrabold text-emerald-950">${Number(item.amount || 0).toLocaleString()}원</span>
-                </div>
-                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-600 text-white rounded text-[9px] sm:text-[10px] font-bold">
-                  <i data-lucide="check" class="w-2.5 h-2.5 stroke-[2.5]"></i>
-                  <span>완료</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-      
-      histList.appendChild(listWrapper);
-      if (window.lucide) lucide.createIcons();
-    }
-
-    async function saveToHistory(order) {
-      const now = new Date();
-      const dateStr = now.toLocaleDateString();
-      const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-      const validCode = (order.orderCode && order.orderCode.trim() !== '' && order.orderCode !== '코드없음') ? order.orderCode.trim() : '';
-
-      const newEntry = {
-        orderCode: validCode,
-        nickname: order.nickname || "",
-        productName: order.productName || "",
-        quantity: order.quantity || 1,
-        amount: order.amount || 0,
-        orderDate: order.orderDate || "-",
-        pickupDate: order.pickupDate || "-",
-        dateOnly: dateStr,
-        timeOnly: timeStr,
-        time: dateStr + ' ' + timeStr,
-        createdAt: Date.now()
-      };
-
-      // 1. 모든 기기와 공유하기 위해 클라우드에 실시간 저장
-      if (db && currentUser) {
-        try {
-          const historyColl = collection(db, 'artifacts', appId, 'public', 'data', 'pickup_history');
-          await addDoc(historyColl, newEntry);
-          return;
-        } catch (err) {
-          console.warn("Cloud save fallback to local:", err);
-        }
-      }
-
-      // 오프라인 대비 로컬 보관 폴백
-      let history = JSON.parse(localStorage.getItem('daiclo_pickup_history') || '[]');
-      history.unshift(newEntry);
-      if(history.length > 200) history.pop();
-      localStorage.setItem('daiclo_pickup_history', JSON.stringify(history));
-      pickupHistoryList = history;
-      updateHistoryButtonAppearance();
-    }
-
+    // 픽업완료 처리: 화면 반영 + Apps Script를 통해 주문데이터 H열에 "완료" 기록
     window.processPickup = function(orderId) {
       const order = ordersData.find(o => o.id === orderId);
-      if (!order) return showToast("주문을 찾을 수 없습니다.", "error");
-
-      order.status = "완료"; 
-      render();
-      saveToHistory(order);
-
-      if (!order.orderCode) {
-        showToast("주문코드가 없어 공유 내역에만 등록되었습니다.", "info");
+      if (!order) {
+        showToast("주문을 찾을 수 없습니다.", "error");
         return;
       }
 
-      const targetUrl = APPS_SCRIPT_SYNC_URL + "?orderCode=" + encodeURIComponent(order.orderCode) + "&status=1&t=" + Date.now();
-      
-      fetch(targetUrl, { method: 'GET', mode: 'no-cors' })
-        .then(() => showToast(`[${order.nickname}] 처리 완료 (모든 기기 공유됨)`, "success"))
-        .catch(() => showToast(`[${order.nickname}] 처리 완료 (공유됨)`, "success"));
+      // 중복 클릭 방지
+      if (order._processing) return;
+      order._processing = true;
+
+      // 일자 및 시각 포맷 생성 (예: 2026.09.12 22:49:05)
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
+      const formattedTimestamp = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+      // 1. 화면 즉시 완료 및 일자/시각 반영
+      order.status = "완료";
+      order.completedAt = formattedTimestamp;
+      order.processedTime = formattedTimestamp;
+
+      // 로컬 스토리지에 캐싱하여 새로고침 시에도 일자/시각 보존
+      try {
+        localStorage.setItem(`daiclo_completed_${order.id}`, formattedTimestamp);
+        if (order.sheetRowIndex) {
+          localStorage.setItem(`daiclo_completed_row_${order.sheetRowIndex}`, formattedTimestamp);
+        }
+      } catch (_) {}
+
+      render();
+
+      // 2. Apps Script의 testDirect() 함수를 명시적으로 실행하도록 파라미터 구성
+      const callbackName = "cb_as_" + Date.now();
+      window[callbackName] = function(res) {
+        delete window[callbackName];
+        console.log("Apps Script 수신 결과:", res);
+        showToast(`[${order.nickname}] 시트 업데이트 완료 (${formattedTimestamp})`, "success");
+      };
+
+      const payload = {
+        action: 'testDirect',
+        functionName: 'testDirect',
+        method: 'testDirect',
+        callback: callbackName,
+
+        sheetName: '주문데이터',
+        targetSheet: '주문데이터',
+
+        sheetRowIndex: String(order.sheetRowIndex || ''),
+        row: String(order.sheetRowIndex || ''),
+
+        col: '8',
+        statusCol: 'H',
+        status: '완료',
+        newStatus: '완료',
+
+        logSheet: 'test',
+        orderDate: String(order.orderDate || ''),
+        pickupDate: String(order.pickupDate || ''),
+        nickname: String(order.nickname || ''),
+        productName: String(order.productName || ''),
+        quantity: String(order.quantity || 1),
+        amount: String(order.amount || 0),
+        processedTime: formattedTimestamp,
+        _t: String(Date.now())
+      };
+
+      try {
+        const queryParams = new URLSearchParams(payload).toString();
+        const targetUrl = APPS_SCRIPT_SYNC_URL + (APPS_SCRIPT_SYNC_URL.includes('?') ? '&' : '?') + queryParams;
+
+        // 1순위: JSONP 방식의 Script Tag 동적 주입
+        try {
+          const sTag = document.createElement('script');
+          sTag.src = targetUrl;
+          sTag.onload = () => { if (sTag.parentNode) sTag.parentNode.removeChild(sTag); };
+          sTag.onerror = () => { 
+            console.warn("Script tag error, fallbacking to fetch/beacon");
+            if (sTag.parentNode) sTag.parentNode.removeChild(sTag); 
+          };
+          document.body.appendChild(sTag);
+        } catch (_) {}
+
+        // 2순위: fetch with mode: 'no-cors' 및 keepalive
+        fetch(targetUrl, {
+          method: 'GET',
+          mode: 'no-cors',
+          cache: 'no-cache',
+          keepalive: true
+        }).catch(() => {});
+
+        // 3순위: 이미지 비콘
+        const beaconImg = new Image();
+        beaconImg.src = targetUrl;
+
+        // 4순위: 숨김 iframe src
+        const hiddenIframe = document.getElementById('appsScriptHiddenTarget');
+        if (hiddenIframe) {
+          hiddenIframe.src = targetUrl;
+        }
+
+        showToast(`[${order.nickname}] 완료 처리됨 (${formattedTimestamp})`, 'success');
+        console.log('Apps Script 요청 발송 URL:', targetUrl);
+      } catch (e) {
+        console.error('Apps Script 호출 실패:', e);
+        showToast(`[${order.nickname}] 전송 오류 발생`, 'error');
+        order.status = '픽업예정';
+        order.completedAt = null;
+        order.processedTime = null;
+        order._processing = false;
+        render();
+      }
     };
 
     function processRawMatrix(matrix) {
       if (!matrix || matrix.length === 0) return [];
-      let offset = (matrix[0] && matrix[0].join("").includes("주문날짜")) ? 1 : 0;
       
+      // 헤더 행 자동 탐지
+      let headerRowIndex = -1;
+      for (let i = 0; i < Math.min(matrix.length, 5); i++) {
+        const rowStr = (matrix[i] || []).join("");
+        if (rowStr.includes("주문") || rowStr.includes("닉네임") || rowStr.includes("상품")) {
+          headerRowIndex = i;
+          break;
+        }
+      }
+
+      let colOrderDate = 0;   // A열: 주문일자
+      let colPickupDate = 1;  // B열: 픽업일자
+      let colNickname = 2;    // C열: 닉네임
+      let colProduct = 3;     // D열: 상품명
+      let colQty = 4;         // E열: 수량
+      let colAmount = 6;      // G열/F열: 금액
+      let colStatus = 7;      // H열: 픽업상태
+
+      if (headerRowIndex >= 0) {
+        const headers = matrix[headerRowIndex].map(h => String(h || "").trim());
+        headers.forEach((h, idx) => {
+          if (h.includes("주문일") || h.includes("주문날짜")) colOrderDate = idx;
+          else if (h.includes("픽업예정") || h.includes("픽업일")) colPickupDate = idx;
+          else if (h.includes("닉네임")) colNickname = idx;
+          else if (h.includes("상품") || h.includes("품목")) colProduct = idx;
+          else if (h.includes("수량")) colQty = idx;
+          else if (h.includes("금액") || h.includes("결제")) colAmount = idx;
+          else if (h.includes("상태") || h.includes("픽업상태")) colStatus = idx;
+        });
+      }
+
+      const offset = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
       const results = [];
+
       for (let i = offset; i < matrix.length; i++) {
         const row = matrix[i];
         if (!row || row.length < 3) continue;
-        
-        const nickname = (row[2] || "").toString().trim();
+
+        const nickname = (row[colNickname] !== undefined ? row[colNickname] : row[2] || "").toString().trim();
         if (!nickname) continue;
 
-        let statusText = (row[7] || "").toString().trim();
-        let status = (statusText.includes("완료") || statusText === "1") ? "완료" : "픽업예정";
+        // 주문상태(H열)의 현재 값 판별
+        const statusRaw = (row[colStatus] !== undefined ? row[colStatus] : row[7] || "").toString().trim();
+        const status = (statusRaw === "완료" || statusRaw.includes("완료") || statusRaw === "1") ? "완료" : "픽업예정";
+
+        const orderId = `ORD-${i + 1}`;
+        let savedTimestamp = "";
+        try {
+          savedTimestamp = localStorage.getItem(`daiclo_completed_${orderId}`) || 
+                           localStorage.getItem(`daiclo_completed_row_${i + 1}`) || "";
+        } catch (_) {}
 
         results.push({
-          id: `ORD-${i + 1}`,
+          id: orderId,
           sheetRowIndex: i + 1,
-          orderDate: (row[0] || "").toString().trim() || "-",
-          pickupDate: (row[1] || "").toString().trim() || "-",
+          orderDate: (row[colOrderDate] || "").toString().trim() || "-",
+          pickupDate: (row[colPickupDate] || "").toString().trim() || "-",
           nickname: nickname,
-          productName: (row[3] || "").toString().trim(),
-          quantity: parseInt((row[4] || "1").toString().replace(/[^0-9]/g, "")) || 1,
-          amount: parseFloat((row[6] || row[5] || "0").toString().replace(/[^0-9]/g, "")) || 0,
+          productName: (row[colProduct] || "").toString().trim(),
+          quantity: parseInt((row[colQty] || "1").toString().replace(/[^0-9]/g, "")) || 1,
+          amount: parseFloat((row[colAmount] || row[5] || "0").toString().replace(/[^0-9]/g, "")) || 0,
           status: status,
-          orderCode: (row[8] || "").toString().trim()
+          completedAt: status === "완료" ? savedTimestamp : null,
+          processedTime: status === "완료" ? savedTimestamp : null
         });
       }
       return results;
     }
+
+    // 구글 스프레드시트 '설정' 탭에서 관리자 비밀번호 동적 로드
+    function loadSettingsSheetData() {
+      const callbackName = "cb_settings_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+      const script = document.createElement("script");
+      let timeoutHandler = null;
+
+      window[callbackName] = function(data) {
+        if (timeoutHandler) clearTimeout(timeoutHandler);
+        if (script.parentNode) script.parentNode.removeChild(script);
+        delete window[callbackName];
+
+        try {
+          if (data && data.table && data.table.rows && data.table.rows.length > 0) {
+            const matrix = data.table.rows.map(row => (row.c || []).map(c => c ? (c.f !== undefined && c.f !== null ? c.f : (c.v !== undefined && c.v !== null ? c.v : "")) : ""));
+            
+            let foundPassword = "";
+
+            // '비밀번호', '패스워드', 'password' 항목 탐색 (가로/세로 배치 모두 지원)
+            for (let r = 0; r < matrix.length; r++) {
+              for (let c = 0; c < matrix[r].length; c++) {
+                const cellVal = String(matrix[r][c] || "").trim();
+                if (cellVal.includes("비밀번호") || cellVal.toLowerCase().includes("password") || cellVal.includes("패스워드")) {
+                  // 1. 같은 행 오른쪽 셀(B열 등) 확인
+                  if (matrix[r][c + 1] !== undefined && String(matrix[r][c + 1]).trim() !== "") {
+                    foundPassword = String(matrix[r][c + 1]).trim();
+                    break;
+                  }
+                  // 2. 아래 행 같은 열(2행 등) 확인
+                  if (r + 1 < matrix.length && matrix[r + 1][c] !== undefined && String(matrix[r + 1][c]).trim() !== "") {
+                    foundPassword = String(matrix[r + 1][c]).trim();
+                    break;
+                  }
+                }
+              }
+              if (foundPassword) break;
+            }
+
+            // 레이블 없이 단순 값만 존재하는 경우(예: A2 또는 B1)
+            if (!foundPassword && matrix.length > 0) {
+              if (matrix.length > 1 && matrix[1][0] !== undefined && String(matrix[1][0]).trim() !== "") {
+                foundPassword = String(matrix[1][0]).trim();
+              } else if (matrix[0][1] !== undefined && String(matrix[0][1]).trim() !== "") {
+                foundPassword = String(matrix[0][1]).trim();
+              }
+            }
+
+            if (foundPassword) {
+              adminPassword = String(foundPassword).trim();
+            }
+          }
+        } catch (err) {
+          console.warn("Settings sheet parse error:", err);
+        }
+      };
+
+      timeoutHandler = setTimeout(() => {
+        if (window[callbackName]) {
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+      }, 3500);
+
+      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent("설정")}&tqx=responseHandler:${callbackName}`;
+      script.onerror = () => {
+        if (timeoutHandler) clearTimeout(timeoutHandler);
+        if (window[callbackName]) {
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+      };
+      document.body.appendChild(script);
+    }
+
+    let isUserDbUpdateRequested = false;
 
     function loadGoogleSheetData(isSilent = false) {
       if(!isSilent) showToast("데이터 갱신 중...", "info");
@@ -760,8 +815,6 @@
           const matrix = data.table.rows.map(row => (row.c || []).map(c => c ? (c.f || c.v || "") : ""));
           const parsed = processRawMatrix(matrix);
           ordersData = parsed.length > 0 ? parsed : SAMPLE_INITIAL_ORDERS;
-          
-          syncCompletedOrdersWithHistory();
 
           const now = new Date();
           const dateStr = now.toLocaleDateString();
@@ -770,6 +823,15 @@
           if (statusElem) statusElem.textContent = dateStr + " " + timeStr + " 갱신됨";
           
           render();
+
+          if (isUserDbUpdateRequested) {
+            isUserDbUpdateRequested = false;
+            if (typeof window.showAlert === "function") {
+              window.showAlert("<strong>DB UPDATE가 정상적으로 완료되었습니다.</strong><br><span class='text-xs text-slate-500 mt-1.5 block font-normal'>구글 시트의 최신 주문 데이터가 성공적으로 반영되었습니다.</span>");
+            } else {
+              showToast("DB UPDATE가 완료되었습니다.", "success");
+            }
+          }
         }
       };
 
@@ -780,22 +842,28 @@
           if (script.parentNode) script.parentNode.removeChild(script);
           if (ordersData.length === 0) {
             ordersData = [...SAMPLE_INITIAL_ORDERS];
-            syncCompletedOrdersWithHistory();
             render();
           }
           const statusElem = document.getElementById("statSourceStatus");
           if (statusElem) statusElem.textContent = "로컬/최신 캐시 데이터 적용됨";
+
+          if (isUserDbUpdateRequested) {
+            isUserDbUpdateRequested = false;
+            if (typeof window.showAlert === "function") {
+              window.showAlert("<strong>DB UPDATE가 완료되었습니다.</strong><br><span class='text-xs text-slate-500 mt-1.5 block font-normal'>최신 캐시 데이터가 반영되었습니다.</span>");
+            }
+          }
         }
       }, 3500);
 
-      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}`;
+      // 구글 스프레드시트의 '주문데이터' 탭을 명시적으로 호출
+      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent("주문데이터")}&tqx=responseHandler:${callbackName}`;
       script.onerror = () => {
         if (timeoutHandler) clearTimeout(timeoutHandler);
-        if (ordersData.length === 0) {
-          ordersData = [...SAMPLE_INITIAL_ORDERS];
-          syncCompletedOrdersWithHistory();
-          render();
-        }
+        // '주문데이터' 탭 이름 로드 실패 시 기본 첫 번째 시트로 fallback 재시도
+        const fallbackScript = document.createElement("script");
+        fallbackScript.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}`;
+        document.body.appendChild(fallbackScript);
       };
       document.body.appendChild(script);
     }
@@ -805,9 +873,8 @@
       
       // 실시간 클라우드 공유 및 구글 시트 초기화
       initCloudSync();
+      loadSettingsSheetData();
       loadGoogleSheetData(false);
-
-      let autoRefreshInterval = null;
 
       // 홈 화면 리프레시 함수 (초기화 및 데이터 동기화)
       function resetToHomeScreen(isManual = false) {
@@ -815,13 +882,13 @@
         
         // 열려 있는 모달 닫기
         if (typeof togglePwModal === "function") togglePwModal(false);
-        if (typeof toggleHistoryModal === "function") toggleHistoryModal(false);
         const customAlertModal = document.getElementById("customAlertModal");
         if (customAlertModal) customAlertModal.classList.add("opacity-0", "pointer-events-none");
         const customConfirmModal = document.getElementById("customConfirmModal");
         if (customConfirmModal) customConfirmModal.classList.add("opacity-0", "pointer-events-none");
 
-        // 백그라운드 데이터 동기화
+        // 백그라운드 데이터 동기화 (주문데이터, 관리자설정)
+        loadSettingsSheetData();
         loadGoogleSheetData(true);
 
         if (isManual) {
@@ -829,24 +896,32 @@
         }
       }
 
-      // 자동 리프레시 주기 타이머 설정 (5분)
-      function startAutoRefreshTimer() {
-        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-        autoRefreshInterval = setInterval(() => {
-          resetToHomeScreen(false);
-        }, 5 * 60 * 1000);
-      }
-
-      startAutoRefreshTimer();
-
-      // 홈 리프레시 버튼 클릭 이벤트
+      // 홈 리프레시 버튼 클릭 이벤트 (수동)
       const manualHomeRefreshBtn = document.getElementById("manualHomeRefreshBtn");
       if (manualHomeRefreshBtn) {
         manualHomeRefreshBtn.addEventListener("click", () => {
           resetToHomeScreen(true);
-          startAutoRefreshTimer();
         });
       }
+
+      // 상단 DAICLO 로고 클릭 시에도 홈 화면 리프레시 동일 실행
+      const headerLogoBtn = document.getElementById("headerLogoBtn");
+      if (headerLogoBtn) {
+        headerLogoBtn.addEventListener("click", () => {
+          resetToHomeScreen(true);
+        });
+      }
+
+      // 10분(600,000ms)마다 자동으로 홈버튼 클릭 (화면 초기화 및 데이터 최신화)
+      const AUTO_HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
+      setInterval(() => {
+        const homeBtn = document.getElementById("manualHomeRefreshBtn");
+        if (homeBtn) {
+          homeBtn.click();
+        } else {
+          resetToHomeScreen(false);
+        }
+      }, AUTO_HOME_REFRESH_INTERVAL);
 
       // 커스텀 안내 팝업(Alert 대체) 로직
       const customAlertModal = document.getElementById("customAlertModal");
@@ -921,7 +996,6 @@
       const pwModal = document.getElementById("passwordModal");
       const pwContent = document.getElementById("passwordModalContent");
       const pwInput = document.getElementById("adminPasswordInput");
-      let passwordTargetAction = "";
       
       const togglePwModal = (show) => {
         if (!pwModal || !pwContent || !pwInput) return;
@@ -931,23 +1005,10 @@
         if(show) { pwInput.value = ''; setTimeout(() => pwInput.focus(), 120); }
       };
 
-      const openHistoryTriggerBtn = document.getElementById("openHistoryTriggerBtn");
-      if (openHistoryTriggerBtn) {
-        openHistoryTriggerBtn.addEventListener("click", () => {
-          passwordTargetAction = "history";
-          togglePwModal(true);
-        });
-      }
-      
       const systemSyncBtn = document.getElementById("systemSyncBtn");
       if (systemSyncBtn) {
         systemSyncBtn.addEventListener("click", () => {
-          if (pickupHistoryList && pickupHistoryList.length > 0) {
-            showAlert("정보변경확인 후<br><span class='text-emerald-700 font-bold'>DB Update</span>가 가능합니다.");
-          } else {
-            passwordTargetAction = "refresh";
-            togglePwModal(true);
-          }
+          togglePwModal(true);
         });
       }
 
@@ -956,18 +1017,22 @@
       
       const checkPassword = () => {
         if (!pwInput) return;
-        if(pwInput.value === "0718") {
+        const entered = pwInput.value.trim();
+        const validPassword = String(adminPassword).trim();
+
+        if(entered === validPassword || entered === "0718") {
           togglePwModal(false);
-          
-          if (passwordTargetAction === "history") {
-            toggleHistoryModal(true);
-          } else if (passwordTargetAction === "refresh") {
-            loadGoogleSheetData(false);
-            showToast("DB Update를 시작합니다.", "info");
-          }
+          isUserDbUpdateRequested = true;
+          loadGoogleSheetData(false);
+          loadSettingsSheetData();
+          showToast("DB Update를 시작합니다.", "info");
         } else {
-          showToast("비밀번호가 일치하지 않습니다.", "error");
           pwInput.value = '';
+          if (typeof showAlert === "function") {
+            showAlert("입력하신 비밀번호가 올바르지 않습니다.<br><span class='text-xs text-slate-400 mt-1 block font-normal'>비밀번호를 다시 확인 후 입력해 주세요.</span>");
+          } else {
+            showToast("비밀번호가 일치하지 않습니다.", "error");
+          }
           pwInput.focus();
         }
       };
@@ -975,21 +1040,6 @@
       const verifyPwBtn = document.getElementById("verifyPasswordBtn");
       if (verifyPwBtn) verifyPwBtn.addEventListener("click", checkPassword);
       if (pwInput) pwInput.addEventListener("keydown", e => { if (e.key === "Enter") checkPassword(); });
-
-      // 히스토리 모달 제어
-      const histModal = document.getElementById("historyModal");
-      const histContent = document.getElementById("historyModalContent");
-      
-      const toggleHistoryModal = (show) => {
-        if (!histModal || !histContent) return;
-        histModal.classList.toggle("opacity-0", !show);
-        histModal.classList.toggle("pointer-events-none", !show);
-        histContent.classList.toggle("scale-95", !show);
-        if(show) renderHistory();
-      };
-
-      const closeHistBtn = document.getElementById("closeHistoryBtn");
-      if (closeHistBtn) closeHistBtn.addEventListener("click", () => toggleHistoryModal(false));
 
       if (window.lucide) lucide.createIcons();
     });
