@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DAICLO 주문내역 조회 시스템</title>
+  <title>공구물품 픽업 체크 프로그램</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
@@ -67,29 +67,27 @@
         DAICLO
       </div>
 
-      <div class="relative z-10 w-full space-y-4">
-        <div class="pr-12 sm:pr-14">
-          <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex flex-wrap items-baseline gap-2">
-            <span>주문조회 &amp; 픽업 체크</span>
-          </h1>
-          <p class="text-sm text-emerald-100/90 leading-relaxed font-normal mt-1">
-            닉네임을 조회하시면 주문내역을 확인할 수 있습니다. 픽업시 <strong class="text-emerald-300 font-bold">"픽업"</strong> 버튼을 클릭해주세요.
-          </p>
-        </div>
+      <div class="relative z-10 max-w-3xl space-y-4 pr-12 sm:pr-14">
+        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex flex-wrap items-baseline gap-2">
+          <span>주문조회 &amp; 픽업 체크</span>
+        </h1>
+        <p class="text-sm text-emerald-100/90 leading-relaxed font-normal">
+          닉네임을 조회하시면 주문내역을 확인할 수 있습니다. 픽업시 <strong class="text-emerald-300 font-bold">"픽업"</strong> 버튼을 클릭해주세요.
+        </p>
 
-        <div class="pt-2 relative space-y-3 w-full">
-          <div class="flex items-stretch gap-2 sm:gap-3 w-full">
-            <div class="relative flex-1 min-w-0 flex items-center">
-              <div class="absolute left-3.5 sm:left-4.5 text-emerald-600/70 pointer-events-none flex items-center">
+        <div class="pt-2 relative space-y-3">
+          <div class="flex flex-col sm:flex-row gap-2.5">
+            <div class="relative flex-1 flex items-center">
+              <div class="absolute left-4 sm:left-4.5 text-emerald-600/70 pointer-events-none flex items-center">
                 <i data-lucide="search" class="w-4 h-4 sm:w-4.5 sm:h-4.5"></i>
               </div>
-              <input type="text" id="nicknameSearchInput" placeholder="예) 헬리오1234 / 1234" autocomplete="off"
-                class="w-full bg-white text-emerald-950 placeholder:text-emerald-700/45 pl-9 sm:pl-11 pr-9 sm:pr-10 py-3.5 sm:py-4 md:py-4.5 rounded-2xl font-medium text-sm sm:text-base focus:outline-none focus:ring-4 focus:ring-emerald-400/40 shadow-lg">
-              <button id="clearSearchBtn" type="button" aria-label="검색어 지우기" class="absolute right-3 text-emerald-600 hover:text-emerald-900 hidden p-1 cursor-pointer">
+              <input type="text" id="nicknameSearchInput" placeholder="닉네임 조회 (예. 헬리오1234 / 1234)" autocomplete="off"
+                class="w-full bg-white text-emerald-950 placeholder:text-emerald-700/45 pl-10 sm:pl-11 pr-10 py-4 sm:py-5 rounded-2xl font-medium text-xs sm:text-sm focus:outline-none focus:ring-4 focus:ring-emerald-400/40 shadow-lg">
+              <button id="clearSearchBtn" type="button" aria-label="검색어 지우기" class="absolute right-3.5 text-emerald-600 hover:text-emerald-900 hidden p-1 cursor-pointer">
                 <i data-lucide="x" class="w-4 h-4 sm:w-4.5 sm:h-4.5"></i>
               </button>
             </div>
-            <button id="searchNicknameBtn" type="button" class="shrink-0 w-16 sm:w-20 md:w-24 flex items-center justify-center gap-1 sm:gap-1.5 bg-emerald-400 hover:bg-emerald-300 active:scale-95 text-emerald-950 font-extrabold text-sm sm:text-base rounded-2xl shadow-lg cursor-pointer border border-emerald-300 transition-all whitespace-nowrap select-none">
+            <button id="searchNicknameBtn" type="button" class="px-6 py-4 sm:px-7 sm:py-5 bg-emerald-400 hover:bg-emerald-300 active:scale-95 text-emerald-950 font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg flex items-center justify-center gap-1.5 cursor-pointer shrink-0 border border-emerald-300 transition-all">
               <i data-lucide="search" class="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.5]"></i>
               <span>조회</span>
             </button>
@@ -459,9 +457,22 @@
       empty.classList.add("hidden");
 
       filtered.sort((a, b) => {
+        // 1순위: 미픽업건(상태 미완료)을 완료건보다 상단에 우선 배치
+        const aComplete = (a.status === "완료" || a.status === "1") ? 1 : 0;
+        const bComplete = (b.status === "완료" || b.status === "1") ? 1 : 0;
+        if (aComplete !== bComplete) {
+          return aComplete - bComplete;
+        }
+
+        // 2순위: 주문일자 최신순 (내림차순)
         const timeA = new Date(String(a.orderDate).replace(/\./g, '-')).getTime() || 0;
         const timeB = new Date(String(b.orderDate).replace(/\./g, '-')).getTime() || 0;
-        return timeB !== timeA ? timeB - timeA : (b.sheetRowIndex || 0) - (a.sheetRowIndex || 0);
+        if (timeB !== timeA) {
+          return timeB - timeA;
+        }
+
+        // 3순위: 같은 일자일 경우 가장 최근에 등록된 행(sheetRowIndex 내림차순)
+        return (b.sheetRowIndex || 0) - (a.sheetRowIndex || 0);
       });
 
       filtered.forEach((order) => {
