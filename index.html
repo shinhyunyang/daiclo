@@ -72,23 +72,23 @@
           <span>주문조회 &amp; 픽업 체크</span>
         </h1>
         <p class="text-sm text-emerald-100/90 leading-relaxed font-normal">
-          닉네임을 조회하시면 주문내역을 확인할 수 있습니다. 픽업시 <strong class="text-emerald-300 font-bold">"픽업예정"</strong> 버튼을 클릭해주세요.
+          닉네임을 조회하시면 주문내역을 확인할 수 있습니다. 픽업시 <strong class="text-emerald-300 font-bold">"픽업"</strong> 버튼을 클릭해주세요.
         </p>
 
         <div class="pt-2 relative space-y-3">
-          <div class="flex flex-col sm:flex-row gap-2.5">
-            <div class="relative flex-1 flex items-center">
-              <div class="absolute left-4 text-emerald-600/70 pointer-events-none">
-                <i data-lucide="search" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+          <div class="flex items-stretch gap-2 sm:gap-2.5 w-full">
+            <div class="relative flex-1 min-w-0 flex items-center">
+              <div class="absolute left-3.5 sm:left-4.5 text-emerald-600/70 pointer-events-none flex items-center">
+                <i data-lucide="search" class="w-4 h-4 sm:w-4.5 sm:h-4.5"></i>
               </div>
-              <input type="text" id="nicknameSearchInput" placeholder="닉네임 조회 (예. 헬리오1234 / 1234)" autocomplete="off"
-                class="w-full bg-white text-emerald-950 placeholder:text-emerald-700/40 pl-11 sm:pl-12 pr-10 py-3 sm:py-3.5 rounded-2xl font-semibold text-sm sm:text-base focus:outline-none focus:ring-4 focus:ring-emerald-400/40 shadow-lg">
-              <button id="clearSearchBtn" type="button" aria-label="검색어 지우기" class="absolute right-3.5 text-emerald-600 hover:text-emerald-900 hidden p-1 cursor-pointer">
-                <i data-lucide="x" class="w-4 h-4"></i>
+              <input type="text" id="nicknameSearchInput" placeholder="예) 헬리오1234 / 1234" autocomplete="off"
+                class="w-full bg-white text-emerald-950 placeholder:text-emerald-700/45 pl-9 sm:pl-11 pr-9 sm:pr-10 py-3.5 sm:py-4 md:py-5 rounded-2xl font-medium text-sm sm:text-base focus:outline-none focus:ring-4 focus:ring-emerald-400/40 shadow-lg">
+              <button id="clearSearchBtn" type="button" aria-label="검색어 지우기" class="absolute right-3 text-emerald-600 hover:text-emerald-900 hidden p-1 cursor-pointer">
+                <i data-lucide="x" class="w-4 h-4 sm:w-4.5 sm:h-4.5"></i>
               </button>
             </div>
-            <button id="searchNicknameBtn" type="button" class="px-6 py-3 sm:px-7 sm:py-3.5 bg-emerald-400 hover:bg-emerald-300 active:scale-95 text-emerald-950 font-extrabold text-sm sm:text-base rounded-2xl shadow-lg flex items-center justify-center gap-2 cursor-pointer shrink-0 border border-emerald-300 transition-all">
-              <i data-lucide="search" class="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]"></i>
+            <button id="searchNicknameBtn" type="button" class="shrink-0 w-20 sm:w-24 md:w-28 flex items-center justify-center gap-1 sm:gap-1.5 bg-emerald-400 hover:bg-emerald-300 active:scale-95 text-emerald-950 font-extrabold text-sm sm:text-base rounded-2xl shadow-lg cursor-pointer border border-emerald-300 transition-all whitespace-nowrap select-none">
+              <i data-lucide="search" class="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.5]"></i>
               <span>조회</span>
             </button>
           </div>
@@ -235,7 +235,7 @@
     let adminPassword = "0718"; // 구글 시트 '설정' 탭 동기화 전 기본 비밀번호
 
     const SHEET_ID = "11OG6u2i64D6exMiBgqGbkq-wrmxrYrVfLSzbYsBoXC8";
-    const APPS_SCRIPT_SYNC_URL = "https://script.google.com/macros/s/AKfycbxKcKIru_cK2eeOLaBixaDRCUDZB5yJulkFvK0zOG4yOJPLwaF065MKcYAIkMa90yEi/exec";
+    const APPS_SCRIPT_SYNC_URL = "https://script.google.com/macros/s/AKfycbyvRsB4cUdnC0DgFz4TJcgmN7_YCf-4dO0MG4SMP0JsDb5BNLZLEY1bPxpA2YKuboAC/exec";
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'daiclo-order-sync';
     let db = null;
@@ -244,10 +244,10 @@
 
     // 미리보기 및 네트워크 지연 대비 샘플 데이터
     const SAMPLE_INITIAL_ORDERS = [
-      { id: 'ORD-1', sheetRowIndex: 1, orderDate: '2026.09.08', pickupDate: '2026.09.11', nickname: '헬리오1234', productName: 'DAICLO 프리미엄 에어로 쿨링 셔츠', quantity: 2, amount: 58000, status: '픽업예정' },
-      { id: 'ORD-2', sheetRowIndex: 2, orderDate: '2026.09.09', pickupDate: '2026.09.11', nickname: '헬리오1234', productName: 'DAICLO 컴포트 슬랙스 네이비 (L)', quantity: 1, amount: 39000, status: '픽업예정' },
-      { id: 'ORD-3', sheetRowIndex: 3, orderDate: '2026.09.07', pickupDate: '2026.09.10', nickname: '송파러버', productName: 'DAICLO 방수 윈드브레이커 자켓', quantity: 1, amount: 72000, status: '완료' },
-      { id: 'ORD-4', sheetRowIndex: 4, orderDate: '2026.09.10', pickupDate: '2026.09.12', nickname: '1234', productName: '데일리 오가닉 코튼 티셔츠 3팩', quantity: 1, amount: 29900, status: '픽업예정' }
+      { id: 'ORD-2', sheetRowIndex: 2, orderDate: '2026.09.08', pickupDate: '2026.09.11', nickname: '헬리오1234', productName: 'DAICLO 프리미엄 에어로 쿨링 셔츠', quantity: 2, amount: 58000, status: '픽업예정' },
+      { id: 'ORD-3', sheetRowIndex: 3, orderDate: '2026.09.09', pickupDate: '2026.09.11', nickname: '헬리오1234', productName: 'DAICLO 컴포트 슬랙스 네이비 (L)', quantity: 1, amount: 39000, status: '픽업예정' },
+      { id: 'ORD-4', sheetRowIndex: 4, orderDate: '2026.09.07', pickupDate: '2026.09.10', nickname: '송파러버', productName: 'DAICLO 방수 윈드브레이커 자켓', quantity: 1, amount: 72000, status: '완료' },
+      { id: 'ORD-5', sheetRowIndex: 5, orderDate: '2026.09.10', pickupDate: '2026.09.12', nickname: '1234', productName: '데일리 오가닉 코튼 티셔츠 3팩', quantity: 1, amount: 29900, status: '픽업예정' }
     ];
 
     async function initCloudSync() {
@@ -472,74 +472,56 @@
         const unitPrice = order.unitPrice || (order.quantity > 0 ? Math.round(order.amount / order.quantity) : order.amount);
 
         itemCard.innerHTML = `
-          <!-- 1번째 라인: [품목명] (PC에서는 금액까지 포함) ... 우측 [픽업예정 / 완료 버튼] -->
-          <div class="flex items-center justify-between gap-2.5 min-w-0">
-            <div class="flex items-center gap-2 min-w-0 flex-1">
-              <!-- 품목명 (모바일에서도 줄바꿈 없이 말줄임 또는 가독성 최우선 확보) -->
-              <span class="text-sm sm:text-base md:text-lg font-black text-slate-900 truncate" title="${escapeHtml(order.productName || '상품명 없음')}">
+          <!-- 1번째 라인: [품목명] / [단가] / [수량] / [합계] ... 우측 [픽업 / 완료 버튼] -->
+          <div class="flex items-center justify-between gap-2 min-w-0">
+            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 text-sm sm:text-lg md:text-xl text-black font-bold">
+              <!-- 품목명 -->
+              <span class="truncate text-black" title="${escapeHtml(order.productName || '상품명 없음')}">
                 ${escapeHtml(order.productName || "상품명 없음")}
               </span>
 
-              <!-- PC/태블릿(sm 이상) 전용 인라인 단가/수량/합계 표시 -->
-              <div class="hidden sm:inline-flex items-center gap-2 shrink-0 text-sm md:text-base font-mono">
-                <span class="text-slate-300 font-bold select-none">/</span>
-                <span class="font-extrabold text-emerald-800 whitespace-nowrap">${Number(unitPrice).toLocaleString()}원</span>
-                <span class="text-slate-300 font-bold select-none">/</span>
-                <span class="font-extrabold text-emerald-800 whitespace-nowrap">${order.quantity}개</span>
-                <span class="text-slate-300 font-bold select-none">/</span>
-                <span class="font-black text-emerald-950 tracking-tight whitespace-nowrap text-base md:text-lg">${Number(order.amount).toLocaleString()}원</span>
+              <!-- 단가 / 수량 / 합계 인라인 표시 (품목명과 동일한 크기 및 검은색 글자) -->
+              <div class="inline-flex items-center gap-1 sm:gap-1.5 shrink-0 text-black">
+                <span class="text-black select-none font-normal">/</span>
+                <span class="whitespace-nowrap text-black">${Number(unitPrice).toLocaleString()}원</span>
+                <span class="text-black select-none font-normal">/</span>
+                <span class="whitespace-nowrap text-black">${order.quantity}개</span>
+                <span class="text-black select-none font-normal">/</span>
+                <span class="whitespace-nowrap text-black">${Number(order.amount).toLocaleString()}원</span>
               </div>
             </div>
 
-            <!-- 우측 액션 버튼 (픽업예정 / 완료) -->
-            <div class="shrink-0 flex items-center justify-end">
+            <!-- 우측 액션 버튼 (픽업 / 완료) -->
+            <div class="shrink-0 flex items-center justify-end ml-1">
               ${isComplete 
                 ? `
-                  <div class="px-2.5 py-1 sm:px-3 sm:py-1 rounded-lg text-[11px] sm:text-xs font-extrabold flex items-center gap-1 bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-2xs">
-                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-700"></i>
+                  <div class="px-2.5 py-1 sm:px-3 sm:py-1 rounded-lg text-[11px] sm:text-xs font-bold flex items-center gap-1 bg-brand-100 text-brand-900 border border-brand-300 shadow-2xs">
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-700"></i>
                     <span>완료</span>
                   </div>
                 `
-                : `<button type="button" onclick="window.processPickup('${order.id}')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1 shadow-2xs border border-emerald-500 bg-white text-emerald-800 hover:bg-emerald-50 active:scale-95 cursor-pointer"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]"></i><span>픽업</span></button>`
+                : `<button type="button" onclick="window.processPickup('${order.id}')" class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1 shadow-2xs border border-brand-500 bg-white text-brand-800 hover:bg-brand-50 active:scale-95 cursor-pointer"><i data-lucide="check" class="w-3.5 h-3.5 text-brand-600 stroke-[2.5]"></i><span>픽업</span></button>`
               }
             </div>
           </div>
 
-          <!-- 모바일(sm 미만) 전용 단가/수량/합계금액 전용 바 (줄바꿈 없이 1줄로 단정하게 정리) -->
-          <div class="flex sm:hidden items-center justify-between gap-1.5 bg-slate-50/90 px-2.5 py-1.5 rounded-xl border border-slate-200/60 text-xs font-mono">
-            <div class="flex items-center gap-1 text-slate-600 font-medium">
-              <span class="text-[10px] text-slate-400 font-sans font-bold">단가</span>
-              <span class="font-bold text-slate-800">${Number(unitPrice).toLocaleString()}원</span>
-            </div>
-            <span class="text-slate-300 select-none text-[10px]">/</span>
-            <div class="flex items-center gap-1 text-slate-600 font-medium">
-              <span class="text-[10px] text-slate-400 font-sans font-bold">수량</span>
-              <span class="font-bold text-emerald-700">${order.quantity}개</span>
-            </div>
-            <span class="text-slate-300 select-none text-[10px]">/</span>
-            <div class="flex items-center gap-1 text-slate-900">
-              <span class="text-[10px] text-slate-400 font-sans font-bold">합계</span>
-              <span class="font-black text-emerald-900 text-xs">${Number(order.amount).toLocaleString()}원</span>
-            </div>
-          </div>
-
-          <!-- 하단 라인: 주문일자 / 픽업예정일자 및 우측 일자/시각 (모바일 & PC 공통 일치) -->
-          <div class="flex items-center justify-between gap-2 pt-1.5 sm:pt-2 border-t border-slate-100/80 text-[11px] sm:text-xs md:text-sm">
-            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
-              <div class="inline-flex items-center gap-1 font-mono">
-                <span class="font-bold text-slate-400">주문 :</span>
-                <span class="font-medium text-slate-600 whitespace-nowrap">${escapeHtml(order.orderDate || "-")}</span>
+          <!-- 하단 라인: 주문일자 / 픽업예정일자 및 우측 일자/시각 (구분선 없이 자연스러운 간격 배치) -->
+          <div class="flex items-center justify-between gap-2 pt-0.5 sm:pt-1 text-xs sm:text-sm md:text-base text-brand-900 font-normal">
+            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 text-brand-900">
+              <div class="inline-flex items-center gap-1 text-brand-900">
+                <span class="text-brand-900">주문 :</span>
+                <span class="text-brand-900 whitespace-nowrap">${escapeHtml(order.orderDate || "-")}</span>
               </div>
-              <span class="text-slate-200 select-none text-xs">|</span>
-              <div class="inline-flex items-center gap-1 font-mono">
-                <span class="font-bold text-emerald-600">픽업예정 :</span>
-                <span class="font-bold text-emerald-800 whitespace-nowrap">${escapeHtml(order.pickupDate || "-")}</span>
+              <span class="text-brand-700/60 select-none">|</span>
+              <div class="inline-flex items-center gap-1 text-brand-900">
+                <span class="text-brand-900">픽업예정 :</span>
+                <span class="text-brand-900 whitespace-nowrap">${escapeHtml(order.pickupDate || "-")}</span>
               </div>
             </div>
 
-            <!-- 완료 시각 (주문일자와 같은 높이에 우측 정렬) -->
+            <!-- 완료 시각 (동일한 일반 굵기) -->
             ${isComplete && completedTimeText ? `
-              <div class="text-[10px] sm:text-xs font-mono font-medium text-emerald-800 shrink-0 select-all tracking-tight text-right">
+              <div class="font-normal text-brand-900 shrink-0 select-all tracking-tight text-right text-xs sm:text-sm md:text-base">
                 ${escapeHtml(completedTimeText)}
               </div>
             ` : ''}
@@ -595,31 +577,40 @@
         showToast(`[${order.nickname}] 시트 업데이트 완료 (${formattedTimestamp})`, "success");
       };
 
+      // 1) test 탭 등록 기능 삭제
+      // 2) 주문데이터탭 H열("완료") 및 I열(픽업버튼 누른 시각) 동시 등록 전송 규격
       const payload = {
-        action: 'testDirect',
-        functionName: 'testDirect',
-        method: 'testDirect',
+        action: 'updatePickup',
+        method: 'updatePickup',
+        functionName: 'testDirect', // 기존 Apps Script 배포 함수와의 하위 호환성 유지
         callback: callbackName,
 
+        // 대상 시트 지정: 오직 '주문데이터' 탭만 대상으로 처리 (test 탭 제외)
         sheetName: '주문데이터',
         targetSheet: '주문데이터',
 
+        // 행 번호
         sheetRowIndex: String(order.sheetRowIndex || ''),
         row: String(order.sheetRowIndex || ''),
 
+        // H열(8번째 컬럼): '완료' 상태
         col: '8',
         statusCol: 'H',
         status: '완료',
         newStatus: '완료',
 
-        logSheet: 'test',
-        orderDate: String(order.orderDate || ''),
-        pickupDate: String(order.pickupDate || ''),
-        nickname: String(order.nickname || ''),
-        productName: String(order.productName || ''),
-        quantity: String(order.quantity || 1),
-        amount: String(order.amount || 0),
+        // I열(9번째 컬럼): 픽업버튼 누른 시각
+        timeCol: '9',
+        pickupTimeCol: 'I',
+        timeColLetter: 'I',
+        pickupTime: formattedTimestamp,
+        pickupCheckTime: formattedTimestamp,
+        time: formattedTimestamp,
         processedTime: formattedTimestamp,
+
+        // 기타 주문 식별 정보
+        orderId: String(order.id || ''),
+        nickname: String(order.nickname || ''),
         _t: String(Date.now())
       };
 
@@ -690,6 +681,7 @@
       let colQty = 4;         // E열: 수량
       let colAmount = 6;      // G열/F열: 금액
       let colStatus = 7;      // H열: 픽업상태
+      let colTimestampIdx = 8; // I열: 픽업체크시각 기본값 (0-indexed 8번)
 
       if (headerRowIndex >= 0) {
         const headers = matrix[headerRowIndex].map(h => String(h || "").trim());
@@ -701,6 +693,7 @@
           else if (h.includes("수량")) colQty = idx;
           else if (h.includes("금액") || h.includes("결제")) colAmount = idx;
           else if (h.includes("상태") || h.includes("픽업상태")) colStatus = idx;
+          else if (h.includes("체크시각") || h.includes("픽업시각") || h.includes("완료시각") || h.includes("시각")) colTimestampIdx = idx;
         });
       }
 
@@ -718,16 +711,22 @@
         const statusRaw = (row[colStatus] !== undefined ? row[colStatus] : row[7] || "").toString().trim();
         const status = (statusRaw === "완료" || statusRaw.includes("완료") || statusRaw === "1") ? "완료" : "픽업예정";
 
-        const orderId = `ORD-${i + 1}`;
+        // 구글 시트의 실제 행 번호: gviz의 data.table.rows는 1행(헤더)을 제외한 2행부터 시작하므로 (i + 2)행입니다.
+        const sheetRow = i + 2;
+        const orderId = `ORD-${sheetRow}`;
         let savedTimestamp = "";
         try {
           savedTimestamp = localStorage.getItem(`daiclo_completed_${orderId}`) || 
-                           localStorage.getItem(`daiclo_completed_row_${i + 1}`) || "";
+                           localStorage.getItem(`daiclo_completed_row_${sheetRow}`) || "";
         } catch (_) {}
+
+        // I열(9번째 열 / 0-indexed 8번)에 기록된 픽업체크시각 확인
+        const colTimestamp = (row[colTimestampIdx] !== undefined ? row[colTimestampIdx] : (row[8] || "")).toString().trim();
+        const finalTimestamp = colTimestamp || savedTimestamp || null;
 
         results.push({
           id: orderId,
-          sheetRowIndex: i + 1,
+          sheetRowIndex: sheetRow,
           orderDate: (row[colOrderDate] || "").toString().trim() || "-",
           pickupDate: (row[colPickupDate] || "").toString().trim() || "-",
           nickname: nickname,
@@ -735,8 +734,8 @@
           quantity: parseInt((row[colQty] || "1").toString().replace(/[^0-9]/g, "")) || 1,
           amount: parseFloat((row[colAmount] || row[5] || "0").toString().replace(/[^0-9]/g, "")) || 0,
           status: status,
-          completedAt: status === "완료" ? savedTimestamp : null,
-          processedTime: status === "완료" ? savedTimestamp : null
+          completedAt: status === "완료" ? finalTimestamp : null,
+          processedTime: status === "완료" ? finalTimestamp : null
         });
       }
       return results;
