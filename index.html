@@ -56,6 +56,12 @@
         </button>
         <span class="text-lg sm:text-xl md:text-2xl font-extrabold text-emerald-900 tracking-tight ml-2">송파헬리오시티점</span>
       </div>
+
+      <!-- 상단 우측 홈 버튼 -->
+      <button id="manualHomeRefreshBtn" type="button" title="홈 화면으로 이동 및 새로고침" aria-label="홈 화면으로 이동 및 새로고침"
+        class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white hover:bg-emerald-50 active:scale-90 text-emerald-800 flex items-center justify-center shadow-sm transition-all cursor-pointer">
+        <i data-lucide="home" class="w-6 h-6 sm:w-7 sm:h-7 text-emerald-700 stroke-[2.3]"></i>
+      </button>
     </div>
   </header>
 
@@ -446,7 +452,7 @@
         const itemCard = document.createElement("div");
         itemCard.className = `rounded-2xl transition-all p-3 sm:p-4.5 flex items-center justify-between gap-3 ${
           isComplete 
-            ? 'bg-slate-200/90 border border-slate-300/80 shadow-inner opacity-75' 
+            ? 'bg-slate-300/75 border border-slate-400/60 shadow-inner opacity-65 grayscale select-none' 
             : 'bg-white border-2 border-emerald-200/80 shadow-sm hover:border-emerald-400'
         }`;
 
@@ -457,12 +463,12 @@
           <!-- 좌측 콘텐츠: 품목명/금액 정보 및 일자 정보 한 줄 구성 -->
           <div class="flex flex-col justify-center gap-1.5 min-w-0 flex-1 py-0.5">
             <!-- 품목명 / 단가 / 수량 / 합계 -->
-            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 text-sm sm:text-base md:text-lg ${isComplete ? 'text-slate-600' : 'text-black'} font-bold">
-              <span class="truncate ${isComplete ? 'text-slate-700' : 'text-black'}" title="${escapeHtml(order.productName || '상품명 없음')}">
+            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0 text-sm sm:text-base md:text-lg ${isComplete ? 'text-slate-600 font-semibold' : 'text-black font-bold'}">
+              <span class="truncate ${isComplete ? 'text-slate-600' : 'text-black'}" title="${escapeHtml(order.productName || '상품명 없음')}">
                 ${escapeHtml(order.productName || "상품명 없음")}
               </span>
 
-              <div class="inline-flex items-center gap-1 sm:gap-1.5 shrink-0 ${isComplete ? 'text-slate-600' : 'text-black'}">
+              <div class="inline-flex items-center gap-1 sm:gap-1.5 shrink-0 ${isComplete ? 'text-slate-500' : 'text-black'}">
                 <span class="select-none font-normal ${isComplete ? 'text-slate-400' : 'text-black'}">/</span>
                 <span class="whitespace-nowrap">${Number(unitPrice).toLocaleString()}원</span>
                 <span class="select-none font-normal ${isComplete ? 'text-slate-400' : 'text-black'}">/</span>
@@ -474,7 +480,7 @@
 
             <!-- 주문일자 / 픽업예정일자 (작은 글씨) -->
             <div class="flex items-center justify-between gap-2 text-[11px] sm:text-xs md:text-sm ${isComplete ? 'text-slate-500' : 'text-emerald-950'} font-normal">
-              <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 ${isComplete ? 'text-slate-600' : 'text-emerald-900'}">
+              <div class="flex items-center gap-2 sm:gap-2.5 shrink-0 ${isComplete ? 'text-slate-500' : 'text-emerald-900'}">
                 <div class="inline-flex items-center gap-1">
                   <span class="${isComplete ? 'text-slate-500' : 'text-emerald-800'}">주문일자 :</span>
                   <span class="whitespace-nowrap">${escapeHtml(order.orderDate || "-")}</span>
@@ -498,8 +504,8 @@
           <div class="shrink-0 flex items-center justify-center">
             ${isComplete 
               ? `
-                <div class="w-16 h-16 sm:w-20 sm:h-20 aspect-square rounded-2xl text-xs sm:text-sm font-extrabold flex flex-col items-center justify-center gap-1 bg-slate-300/80 text-slate-700 border border-slate-400/60 select-none shadow-inner">
-                  <i data-lucide="check-circle-2" class="w-5 h-5 sm:w-6 sm:h-6 text-slate-600 stroke-[2.5]"></i>
+                <div class="w-16 h-16 sm:w-20 sm:h-20 aspect-square rounded-2xl text-xs sm:text-sm font-bold flex flex-col items-center justify-center gap-1 bg-slate-400/40 text-slate-600 border border-slate-400/70 select-none shadow-inner">
+                  <i data-lucide="check-circle-2" class="w-5 h-5 sm:w-6 sm:h-6 text-slate-500 stroke-[2.5]"></i>
                   <span class="tracking-tight">완료</span>
                 </div>
               `
@@ -860,6 +866,12 @@
       const headerLogoBtn = document.getElementById("headerLogoBtn");
       if (headerLogoBtn) {
         headerLogoBtn.addEventListener("click", () => resetToHomeScreen(true));
+      }
+
+      // 우측 상단 홈 버튼 클릭 이벤트 연결
+      const manualHomeRefreshBtn = document.getElementById("manualHomeRefreshBtn");
+      if (manualHomeRefreshBtn) {
+        manualHomeRefreshBtn.addEventListener("click", () => resetToHomeScreen(true));
       }
 
       // 닉네임 선택 모달 닫기 이벤트 연결
