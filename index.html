@@ -380,9 +380,8 @@
 
       multiNicknameChoices = matching;
 
-      if (matching.length === 1) {
-        selectNickname(matching[0]);
-      } else if (matching.length > 1) {
+      // 일치하는 닉네임이 1개 이상이면 개수(1건/다건)와 관계없이 무조건 선택 팝업 모달 표시
+      if (matching.length > 0) {
         openNicknameSelectModal(matching);
       } else {
         activeSelectedNickname = "";
