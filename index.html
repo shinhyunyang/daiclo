@@ -4,17 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>물품 픽업 체크 시스템 - DAICLO 송파헬리오시티점</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Pretendard 대체 및 Montserrat -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Pretendard', 'sans-serif'],
+            sans: ['"Noto Sans KR"', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
             brand: ['Montserrat', 'sans-serif']
           }
         }
@@ -22,7 +25,7 @@
     }
   </script>
   <style>
-    body { font-family: 'Pretendard', sans-serif; background-color: #f7faf8; color: #064e3b; }
+    body { font-family: 'Noto Sans KR', sans-serif; background-color: #f7faf8; color: #064e3b; }
     .badge-logo {
       background-color: #064e3b; color: #fff; border-radius: 9999px; display: inline-flex;
       align-items: center; justify-content: center; letter-spacing: -0.02em; border: 2px solid #047857;
@@ -211,8 +214,8 @@
     let isUserDbUpdateRequested = false;
 
     const SHEET_ID = "11OG6u2i64D6exMiBgqGbkq-wrmxrYrVfLSzbYsBoXC8";
-    // 최신 Google Apps Script Web App 배포 URL
-    const APPS_SCRIPT_SYNC_URL = "https://script.google.com/macros/s/AKfycbxKBvQ9s21OTgTO1DEfGd2rCoj7bNYKHVC9kY0v93ax5fNOvJe0ZcczhxKR224XtIs/exec";
+    // 새로 배포된 Google Apps Script Web App URL
+    const APPS_SCRIPT_SYNC_URL = "https://script.google.com/macros/s/AKfycbwh_OvK5IDJsQWA_rtoe8ywvgdhbJZ0YRh21GugJzQ45tXKkZyT1rGWFy7qaxkddGAU/exec";
 
     const SAMPLE_INITIAL_ORDERS = [
       { id: 'ORD-2', sheetRowIndex: 2, orderDate: '2026.10.25', pickupDate: '2026.10.29', nickname: '헬리오1234', productName: 'DAICLO 프리미엄 에어로 쿨링 셔츠', quantity: 2, amount: 58000, status: '픽업예정' },
@@ -380,7 +383,6 @@
 
       multiNicknameChoices = matching;
 
-      // 일치하는 닉네임이 1개 이상이면 개수(1건/다건)와 관계없이 무조건 선택 팝업 모달 표시
       if (matching.length > 0) {
         openNicknameSelectModal(matching);
       } else {
@@ -498,12 +500,21 @@
                   <span class="tracking-tight">완료</span>
                 </div>
               `
-              : `<button type="button" onclick="window.processPickup('${order.id}')" class="w-16 h-16 sm:w-20 sm:h-20 aspect-square rounded-2xl text-xs sm:text-sm md:text-base font-black transition-all flex flex-col items-center justify-center gap-1 shadow-md border-2 border-emerald-600 bg-white text-emerald-950 hover:bg-emerald-50 active:scale-95 cursor-pointer hover:border-emerald-700"><i data-lucide="check" class="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 stroke-[3.2]"></i><span class="tracking-tight">픽업</span></button>`
+              : `<button type="button" data-order-id="${order.id}" class="pickup-btn w-16 h-16 sm:w-20 sm:h-20 aspect-square rounded-2xl text-xs sm:text-sm md:text-base font-black transition-all flex flex-col items-center justify-center gap-1 shadow-md border-2 border-emerald-600 bg-white text-emerald-950 hover:bg-emerald-50 active:scale-95 cursor-pointer hover:border-emerald-700"><i data-lucide="check" class="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 stroke-[3.2]"></i><span class="tracking-tight">픽업</span></button>`
             }
           </div>
         `;
         container.appendChild(itemCard);
       });
+
+      // 동적 버튼 리스너 바인딩
+      container.querySelectorAll('.pickup-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-order-id');
+          if (id) window.processPickup(id);
+        });
+      });
+
       if (window.lucide) lucide.createIcons();
     }
 
@@ -541,7 +552,11 @@
 
       render();
 
-      // 2. Apps Script 규격에 맞춘 단일 통합 파라미터 생성 (updatePickup 1회만 호출하여 주문데이터 갱신 및 조회이력 단 1회 기록)
+      // 조회이력 4번째 컬럼(D열)용 품목 상세 정보 조합: 품목명 / 단가 / 수량 / 총금액
+      const calculatedUnitPrice = order.unitPrice || (order.quantity > 0 ? Math.round(order.amount / order.quantity) : order.amount);
+      const formattedItemDetail = `${order.productName || '상품명 없음'} / ${Number(calculatedUnitPrice).toLocaleString()}원 / ${order.quantity}개 / ${Number(order.amount).toLocaleString()}원`;
+
+      // 2. Apps Script 규격 파라미터 생성 (조회이력 D열/4열에 매핑될 수 있는 모든 필드명 일괄 전달)
       const callbackName = "cb_as_" + Date.now();
       const payload = {
         action: 'updatePickup',
@@ -551,14 +566,34 @@
         targetSheet: '주문데이터',
         sheetRowIndex: String(order.sheetRowIndex || ''),
         row: String(order.sheetRowIndex || ''),
+        rowIndex: String(order.sheetRowIndex || ''),
         orderId: String(order.id || ''),
         nickname: String(order.nickname || ''),
-        productName: String(order.productName || ''),
+        // 품목 단독 명칭 및 4열 상세 정보
+        productName: formattedItemDetail,
+        originalProductName: String(order.productName || ''),
+        unitPrice: String(calculatedUnitPrice),
+        quantity: String(order.quantity),
+        amount: String(order.amount),
+        // 조회이력 4번째 열(D열) 대상 파라미터 변수명 총망라
+        itemDetail: formattedItemDetail,
+        logDetail: formattedItemDetail,
+        col4: formattedItemDetail,
+        logCol4: formattedItemDetail,
+        col_4: formattedItemDetail,
+        detail: formattedItemDetail,
+        itemSummary: formattedItemDetail,
+        description: formattedItemDetail,
+        note: formattedItemDetail,
+        memo: formattedItemDetail,
+        // 상태 및 시각
         status: '완료',
+        pickupStatus: '완료',
+        val: '완료',
         col: '8',
+        colIndex: '8',
         timeCol: '9',
         pickupTime: formattedTimestamp,
-        // 조회이력 탭 자동 기록용 파라미터 (단 1회 동시 처리)
         logType: '픽업',
         logContent: String(order.nickname || ''),
         logTime: formattedTimestamp,
@@ -575,8 +610,31 @@
         showToast(`[${order.nickname}] 시트 반영 완료 (${formattedTimestamp})`, "success");
       };
 
-      // 4. 단일 전송 (JSONP 스크립트 태그 - 중복 전송 방지를 위해 다중 발송 제거)
+      // 4. 이중 전송 보장: no-cors fetch + 숨김 폼/iframe + script 태그 백업
       try {
+        // (1) Modern Fetch (no-cors로 리디렉션 통과 보장)
+        fetch(targetUrl, {
+          method: 'GET',
+          mode: 'no-cors',
+          cache: 'no-cache'
+        }).catch(() => {});
+
+        // (2) Hidden Form 제출 (Apps Script 확실한 트리거)
+        const hiddenForm = document.getElementById('appsScriptHiddenForm');
+        if (hiddenForm) {
+          hiddenForm.innerHTML = '';
+          Object.entries(payload).forEach(([k, v]) => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = k;
+            hiddenInput.value = v;
+            hiddenForm.appendChild(hiddenInput);
+          });
+          hiddenForm.action = APPS_SCRIPT_SYNC_URL;
+          hiddenForm.submit();
+        }
+
+        // (3) Script Tag Fallback
         const sTag = document.createElement('script');
         sTag.src = targetUrl;
         sTag.async = true;
@@ -591,6 +649,11 @@
         document.body.appendChild(sTag);
 
         showToast(`[${order.nickname}] 픽업 체크 완료`, 'success');
+
+        // 3초 후 구글 시트 최신 상태 백그라운드 재검증
+        setTimeout(() => {
+          loadGoogleSheetData(true);
+        }, 3000);
       } catch (e) {
         console.error('시트 전송 실패:', e);
         order._processing = false;
