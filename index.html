@@ -214,8 +214,8 @@
     let isUserDbUpdateRequested = false;
 
     const SHEET_ID = "11OG6u2i64D6exMiBgqGbkq-wrmxrYrVfLSzbYsBoXC8";
-    // 새로 배포된 Google Apps Script Web App URL
-    const APPS_SCRIPT_SYNC_URL = "https://script.google.com/macros/s/AKfycbwh_OvK5IDJsQWA_rtoe8ywvgdhbJZ0YRh21GugJzQ45tXKkZyT1rGWFy7qaxkddGAU/exec";
+    // 최신 Google Apps Script Web App 배포 URL
+    const APPS_SCRIPT_SYNC_URL = "https://script.google.com/macros/s/AKfycbwTCFzzch92FFwHS9p7Ejrnqy95bYaJ4Df3XC-BRq8y3nvgTTRuTw_9tEoW1hw1kM9O/exec";
 
     const SAMPLE_INITIAL_ORDERS = [
       { id: 'ORD-2', sheetRowIndex: 2, orderDate: '2026.10.25', pickupDate: '2026.10.29', nickname: '헬리오1234', productName: 'DAICLO 프리미엄 에어로 쿨링 셔츠', quantity: 2, amount: 58000, status: '픽업예정' },
@@ -554,48 +554,38 @@
 
       // 조회이력 4번째 컬럼(D열)용 품목 상세 정보 조합: 품목명 / 단가 / 수량 / 총금액
       const calculatedUnitPrice = order.unitPrice || (order.quantity > 0 ? Math.round(order.amount / order.quantity) : order.amount);
-      const formattedItemDetail = `${order.productName || '상품명 없음'} / ${Number(calculatedUnitPrice).toLocaleString()}원 / ${order.quantity}개 / ${Number(order.amount).toLocaleString()}원`;
+      const pureProductName = String(order.productName || '').trim();
+      const formattedItemDetail = `${pureProductName || '상품명 없음'} / ${Number(calculatedUnitPrice).toLocaleString()}원 / ${order.quantity}개 / ${Number(order.amount).toLocaleString()}원`;
 
-      // 2. Apps Script 규격 파라미터 생성 (조회이력 D열/4열에 매핑될 수 있는 모든 필드명 일괄 전달)
+      // 2. Apps Script 규격 파라미터 생성 (다양한 스크립트 작성 형태 호환성 보장)
       const callbackName = "cb_as_" + Date.now();
       const payload = {
         action: 'updatePickup',
         method: 'updatePickup',
+        type: 'updatePickup',
         callback: callbackName,
         sheetName: '주문데이터',
         targetSheet: '주문데이터',
-        sheetRowIndex: String(order.sheetRowIndex || ''),
         row: String(order.sheetRowIndex || ''),
+        sheetRowIndex: String(order.sheetRowIndex || ''),
         rowIndex: String(order.sheetRowIndex || ''),
-        orderId: String(order.id || ''),
-        nickname: String(order.nickname || ''),
-        // 품목 단독 명칭 및 4열 상세 정보
-        productName: formattedItemDetail,
-        originalProductName: String(order.productName || ''),
+        line: String(order.sheetRowIndex || ''),
+        nickname: String(order.nickname || '').trim(),
+        product: pureProductName,
+        originalProductName: pureProductName,
+        productName: pureProductName,
         unitPrice: String(calculatedUnitPrice),
         quantity: String(order.quantity),
         amount: String(order.amount),
-        // 조회이력 4번째 열(D열) 대상 파라미터 변수명 총망라
         itemDetail: formattedItemDetail,
-        logDetail: formattedItemDetail,
         col4: formattedItemDetail,
-        logCol4: formattedItemDetail,
-        col_4: formattedItemDetail,
-        detail: formattedItemDetail,
-        itemSummary: formattedItemDetail,
-        description: formattedItemDetail,
-        note: formattedItemDetail,
-        memo: formattedItemDetail,
-        // 상태 및 시각
         status: '완료',
+        orderStatus: '완료',
         pickupStatus: '완료',
-        val: '완료',
-        col: '8',
-        colIndex: '8',
-        timeCol: '9',
+        state: '완료',
         pickupTime: formattedTimestamp,
+        completedAt: formattedTimestamp,
         logType: '픽업',
-        logContent: String(order.nickname || ''),
         logTime: formattedTimestamp,
         _t: String(Date.now())
       };
@@ -607,34 +597,15 @@
       window[callbackName] = function(res) {
         delete window[callbackName];
         order._processing = false;
-        showToast(`[${order.nickname}] 시트 반영 완료 (${formattedTimestamp})`, "success");
+        showToast(`[${order.nickname}] 픽업 완료`, "success");
       };
 
-      // 4. 이중 전송 보장: no-cors fetch + 숨김 폼/iframe + script 태그 백업
+      // 4. Multi-Layer 전송 처리 (Fetch mode: no-cors + Dynamic Script + Hidden Form Fallback)
       try {
-        // (1) Modern Fetch (no-cors로 리디렉션 통과 보장)
-        fetch(targetUrl, {
-          method: 'GET',
-          mode: 'no-cors',
-          cache: 'no-cache'
-        }).catch(() => {});
+        // [방식 A] fetch API no-cors 전송 (가장 신뢰성 높음)
+        fetch(targetUrl, { mode: 'no-cors', method: 'GET' }).catch(() => {});
 
-        // (2) Hidden Form 제출 (Apps Script 확실한 트리거)
-        const hiddenForm = document.getElementById('appsScriptHiddenForm');
-        if (hiddenForm) {
-          hiddenForm.innerHTML = '';
-          Object.entries(payload).forEach(([k, v]) => {
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = k;
-            hiddenInput.value = v;
-            hiddenForm.appendChild(hiddenInput);
-          });
-          hiddenForm.action = APPS_SCRIPT_SYNC_URL;
-          hiddenForm.submit();
-        }
-
-        // (3) Script Tag Fallback
+        // [방식 B] JSONP Script 전송
         const sTag = document.createElement('script');
         sTag.src = targetUrl;
         sTag.async = true;
@@ -645,15 +616,31 @@
         sTag.onerror = () => { 
           if (sTag.parentNode) sTag.parentNode.removeChild(sTag); 
           order._processing = false;
+          // [방식 C] Hidden Form Submission Fallback
+          try {
+            const hiddenForm = document.getElementById('appsScriptHiddenForm');
+            if (hiddenForm) {
+              hiddenForm.action = APPS_SCRIPT_SYNC_URL;
+              hiddenForm.innerHTML = '';
+              Object.keys(payload).forEach(k => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = k;
+                input.value = payload[k];
+                hiddenForm.appendChild(input);
+              });
+              hiddenForm.submit();
+            }
+          } catch (_) {}
         };
         document.body.appendChild(sTag);
 
-        showToast(`[${order.nickname}] 픽업 체크 완료`, 'success');
+        showToast(`[${order.nickname}] 픽업 처리 요청 전송 완료`, 'info');
 
-        // 3초 후 구글 시트 최신 상태 백그라운드 재검증
+        // 2.5초 후 최신 시트 데이터 동기화
         setTimeout(() => {
           loadGoogleSheetData(true);
-        }, 3000);
+        }, 2500);
       } catch (e) {
         console.error('시트 전송 실패:', e);
         order._processing = false;
@@ -695,7 +682,7 @@
         });
       }
 
-      const offset = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
+      const offset = headerRowIndex >= 0 ? headerRowIndex + 1 : 1;
       const results = [];
 
       for (let i = offset; i < matrix.length; i++) {
@@ -708,7 +695,7 @@
         const statusRaw = (row[colStatus] !== undefined ? row[colStatus] : row[7] || "").toString().trim();
         const status = (statusRaw === "완료" || statusRaw.includes("완료") || statusRaw === "1") ? "완료" : "픽업예정";
 
-        const sheetRow = i + 2;
+        const sheetRow = i + 1;
         const orderId = `ORD-${sheetRow}`;
         let savedTimestamp = "";
         try {
