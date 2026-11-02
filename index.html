@@ -559,9 +559,13 @@
       // UI 즉시 업데이트 호출
       render();
 
-      // 조회이력 4번째 컬럼(D열)용 품목 상세 정보 조합: 품목명 / 단가 / 수량 / 총금액
+      // 조회이력 4번째 컬럼(D열)용 상세 정보 조합: 주문일자 / 픽업예정일자 / 품목명 / 단가 / 수량 / 금액
       const calculatedUnitPrice = order.unitPrice || (order.quantity > 0 ? Math.round(order.amount / order.quantity) : order.amount);
-      const formattedItemDetail = `${String(order.productName || '').trim() || '상품명 없음'} / ${Number(calculatedUnitPrice).toLocaleString()}원 / ${order.quantity}개 / ${Number(order.amount).toLocaleString()}원`;
+      const pureOrderDate = String(order.orderDate || '-').trim();
+      const purePickupDate = String(order.pickupDate || '-').trim();
+      
+      // 요청에 맞춘 D열 기록 포맷: 주문일자 / 픽업예정일자 / 품목명 / 단가 / 수량 / 금액
+      const formattedItemDetail = `${pureOrderDate} / ${purePickupDate} / ${pureProductName || '상품명 없음'} / ${Number(calculatedUnitPrice).toLocaleString()}원 / ${order.quantity}개 / ${Number(order.amount).toLocaleString()}원`;
 
       // 2. Apps Script 규격 파라미터 생성 (다양한 스크립트 작성 형태 호환성 보장)
       const callbackName = "cb_as_" + Date.now();
@@ -580,6 +584,8 @@
         product: pureProductName,
         originalProductName: pureProductName,
         productName: pureProductName,
+        orderDate: pureOrderDate,
+        pickupDate: purePickupDate,
         unitPrice: String(calculatedUnitPrice),
         quantity: String(order.quantity),
         amount: String(order.amount),
