@@ -538,24 +538,29 @@
       const pad = (n) => String(n).padStart(2, "0");
       const formattedTimestamp = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-      // 1. UI 즉시 완료 반영 및 로컬 스토리지 보존
+      // 1. UI 즉시 완료 반영 및 로컬 스토리지 보존 (고유 픽업키 생성)
       order.status = "완료";
       order.completedAt = formattedTimestamp;
       order.processedTime = formattedTimestamp;
+
+      const pureNickname = String(order.nickname || '').trim().toLowerCase();
+      const pureProductName = String(order.productName || '').trim().toLowerCase();
+      const itemUniqueKey = `daiclo_completed_key_${pureNickname}_${pureProductName}`;
 
       try {
         localStorage.setItem(`daiclo_completed_${order.id}`, formattedTimestamp);
         if (order.sheetRowIndex) {
           localStorage.setItem(`daiclo_completed_row_${order.sheetRowIndex}`, formattedTimestamp);
         }
+        // 닉네임+상품명 조합 고유키 추가 저장 (시트 행 변동 시에도 완벽 방어)
+        localStorage.setItem(itemUniqueKey, formattedTimestamp);
       } catch (_) {}
 
       render();
 
       // 조회이력 4번째 컬럼(D열)용 품목 상세 정보 조합: 품목명 / 단가 / 수량 / 총금액
       const calculatedUnitPrice = order.unitPrice || (order.quantity > 0 ? Math.round(order.amount / order.quantity) : order.amount);
-      const pureProductName = String(order.productName || '').trim();
-      const formattedItemDetail = `${pureProductName || '상품명 없음'} / ${Number(calculatedUnitPrice).toLocaleString()}원 / ${order.quantity}개 / ${Number(order.amount).toLocaleString()}원`;
+      const formattedItemDetail = `${String(order.productName || '').trim() || '상품명 없음'} / ${Number(calculatedUnitPrice).toLocaleString()}원 / ${order.quantity}개 / ${Number(order.amount).toLocaleString()}원`;
 
       // 2. Apps Script 규격 파라미터 생성 (다양한 스크립트 작성 형태 호환성 보장)
       const callbackName = "cb_as_" + Date.now();
@@ -692,16 +697,27 @@
         const nickname = (row[colNickname] !== undefined ? row[colNickname] : row[2] || "").toString().trim();
         if (!nickname) continue;
 
-        const statusRaw = (row[colStatus] !== undefined ? row[colStatus] : row[7] || "").toString().trim();
-        const status = (statusRaw === "완료" || statusRaw.includes("완료") || statusRaw === "1") ? "완료" : "픽업예정";
-
+        const productName = (row[colProduct] || "").toString().trim();
         const sheetRow = i + 1;
         const orderId = `ORD-${sheetRow}`;
+
+        /* 로컬스토리지 완료 기록 다각도 검증 (시트 반영 지연으로 인한 롤백 완전 차단) */
+        const pureNickname = nickname.toLowerCase();
+        const pureProductName = productName.toLowerCase();
+        const itemUniqueKey = `daiclo_completed_key_${pureNickname}_${pureProductName}`;
+
         let savedTimestamp = "";
         try {
           savedTimestamp = localStorage.getItem(`daiclo_completed_${orderId}`) || 
-                           localStorage.getItem(`daiclo_completed_row_${sheetRow}`) || "";
+                           localStorage.getItem(`daiclo_completed_row_${sheetRow}`) || 
+                           localStorage.getItem(itemUniqueKey) || "";
         } catch (_) {}
+
+        const statusRaw = (row[colStatus] !== undefined ? row[colStatus] : row[7] || "").toString().trim();
+        const isSheetCompleted = (statusRaw === "완료" || statusRaw.includes("완료") || statusRaw === "1");
+        
+        /* 시트에 이미 완료로 등록되어 있거나 로컬 완료 기록이 존재하면 무조건 '완료' 상태 보장 */
+        const status = (isSheetCompleted || !!savedTimestamp) ? "완료" : "픽업예정";
 
         const colTimestamp = (row[colTimestampIdx] !== undefined ? row[colTimestampIdx] : (row[8] || "")).toString().trim();
         const finalTimestamp = colTimestamp || savedTimestamp || null;
@@ -712,7 +728,7 @@
           orderDate: (row[colOrderDate] || "").toString().trim() || "-",
           pickupDate: (row[colPickupDate] || "").toString().trim() || "-",
           nickname: nickname,
-          productName: (row[colProduct] || "").toString().trim(),
+          productName: productName,
           quantity: parseInt((row[colQty] || "1").toString().replace(/[^0-9]/g, "")) || 1,
           amount: parseFloat((row[colAmount] || row[5] || "0").toString().replace(/[^0-9]/g, "")) || 0,
           status: status,
@@ -896,7 +912,7 @@
       const closeNicknameSelectBtn = document.getElementById("closeNicknameSelectBtn");
       if (closeNicknameSelectBtn) closeNicknameSelectBtn.addEventListener("click", closeNicknameSelectModal);
 
-      // 10분 주기 자동 새로고침 및 동기화
+      /* 10분 주기 자동 새로고침 및 동기화 */
       const AUTO_HOME_REFRESH_INTERVAL = 10 * 60 * 1000;
       setInterval(() => {
         resetToHomeScreen(false);
