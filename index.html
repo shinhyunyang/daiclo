@@ -556,6 +556,7 @@
         localStorage.setItem(itemUniqueKey, formattedTimestamp);
       } catch (_) {}
 
+      // UI 즉시 업데이트 호출
       render();
 
       // 조회이력 4번째 컬럼(D열)용 품목 상세 정보 조합: 품목명 / 단가 / 수량 / 총금액
@@ -701,26 +702,46 @@
         const sheetRow = i + 1;
         const orderId = `ORD-${sheetRow}`;
 
-        /* 로컬스토리지 완료 기록 다각도 검증 (시트 반영 지연으로 인한 롤백 완전 차단) */
         const pureNickname = nickname.toLowerCase();
         const pureProductName = productName.toLowerCase();
         const itemUniqueKey = `daiclo_completed_key_${pureNickname}_${pureProductName}`;
 
-        let savedTimestamp = "";
-        try {
-          savedTimestamp = localStorage.getItem(`daiclo_completed_${orderId}`) || 
-                           localStorage.getItem(`daiclo_completed_row_${sheetRow}`) || 
-                           localStorage.getItem(itemUniqueKey) || "";
-        } catch (_) {}
+        const existingOrder = ordersData.find(o => o.id === orderId || ((o.nickname || '').toLowerCase() === pureNickname && (o.productName || '').toLowerCase() === pureProductName));
 
         const statusRaw = (row[colStatus] !== undefined ? row[colStatus] : row[7] || "").toString().trim();
         const isSheetCompleted = (statusRaw === "완료" || statusRaw.includes("완료") || statusRaw === "1");
         
-        /* 시트에 이미 완료로 등록되어 있거나 로컬 완료 기록이 존재하면 무조건 '완료' 상태 보장 */
-        const status = (isSheetCompleted || !!savedTimestamp) ? "완료" : "픽업예정";
+        let savedTimestamp = "";
+        try {
+          /* 구글 시트 원본 데이터가 '완료'가 아닐 때 (관리자가 '픽업예정'으로 변경한 경우) */
+          if (!isSheetCompleted) {
+            /* 1) 로컬스토리지에 저장된 픽업 완료 락 모두 삭제 */
+            localStorage.removeItem(`daiclo_completed_${orderId}`);
+            localStorage.removeItem(`daiclo_completed_row_${sheetRow}`);
+            localStorage.removeItem(itemUniqueKey);
+            savedTimestamp = "";
+
+            /* 2) 메모리 내 이전 상태 데이터도 초기화 (완료 상태 덮어쓰기 완전 차단) */
+            if (existingOrder) {
+              existingOrder._processing = false;
+              existingOrder.status = "픽업예정";
+              existingOrder.completedAt = null;
+              existingOrder.processedTime = null;
+            }
+          } else {
+            savedTimestamp = localStorage.getItem(`daiclo_completed_${orderId}`) || 
+                             localStorage.getItem(`daiclo_completed_row_${sheetRow}`) || 
+                             localStorage.getItem(itemUniqueKey) || 
+                             (existingOrder ? existingOrder.completedAt : "") || "";
+          }
+        } catch (_) {}
+
+        /* 시트가 완료 상태가 아닌 경우 무조건 '픽업예정'으로 상태 반환 */
+        const isMemProcessing = existingOrder ? Boolean(existingOrder._processing) : false;
+        const status = isSheetCompleted ? "완료" : (isMemProcessing ? "완료" : "픽업예정");
 
         const colTimestamp = (row[colTimestampIdx] !== undefined ? row[colTimestampIdx] : (row[8] || "")).toString().trim();
-        const finalTimestamp = colTimestamp || savedTimestamp || null;
+        const finalTimestamp = status === "완료" ? (colTimestamp || savedTimestamp || (existingOrder ? existingOrder.completedAt : null)) : null;
 
         results.push({
           id: orderId,
@@ -732,8 +753,9 @@
           quantity: parseInt((row[colQty] || "1").toString().replace(/[^0-9]/g, "")) || 1,
           amount: parseFloat((row[colAmount] || row[5] || "0").toString().replace(/[^0-9]/g, "")) || 0,
           status: status,
-          completedAt: status === "완료" ? finalTimestamp : null,
-          processedTime: status === "완료" ? finalTimestamp : null
+          completedAt: finalTimestamp,
+          processedTime: finalTimestamp,
+          _processing: isMemProcessing
         });
       }
       return results;
@@ -795,7 +817,8 @@
         }
       }, 3500);
 
-      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent("설정")}&tqx=responseHandler:${callbackName}`;
+      const cacheBuster = "_t=" + Date.now();
+      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent("설정")}&tqx=responseHandler:${callbackName}&${cacheBuster}`;
       script.onerror = () => {
         if (timeoutHandler) clearTimeout(timeoutHandler);
         if (window[callbackName]) {
@@ -808,6 +831,11 @@
 
     function loadGoogleSheetData(isSilent = false) {
       if (!isSilent) showToast("데이터 갱신 중...", "info");
+
+      /* DB UPDATE 동기화 시 기존 메모리 상의 이전 주문 상태값 초기화 */
+      if (isUserDbUpdateRequested) {
+        ordersData = [];
+      }
 
       const callbackName = "cb_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
       const script = document.createElement("script");
@@ -856,11 +884,12 @@
         }
       }, 4000);
 
-      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent("주문데이터")}&tqx=responseHandler:${callbackName}`;
+      const cacheBuster = "_t=" + Date.now();
+      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent("주문데이터")}&tqx=responseHandler:${callbackName}&${cacheBuster}`;
       script.onerror = () => {
         if (timeoutHandler) clearTimeout(timeoutHandler);
         const fallbackScript = document.createElement("script");
-        fallbackScript.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}`;
+        fallbackScript.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}&${cacheBuster}`;
         document.body.appendChild(fallbackScript);
       };
       document.body.appendChild(script);
