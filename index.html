@@ -36,7 +36,7 @@
     .custom-scroll::-webkit-scrollbar-thumb { background: #a7f3d0; border-radius: 9999px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #6ee7b7; }
 
-    /* 스크롤바 숨김 스타일 (스크롤 기능은 유지하면서 UI를 깔끔하게 정돈) */
+    /* 스크롤바 숨김 스타일 (스크롤 기능은 유지하면서 깔끔한 UI 유지) */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -201,10 +201,6 @@
     </div>
   </div>
 
-  <!-- 비동기 요청용 숨김 iframe 및 form -->
-  <iframe id="appsScriptHiddenTarget" name="appsScriptHiddenTarget" style="display:none; width:0; height:0; border:0;"></iframe>
-  <form id="appsScriptHiddenForm" target="appsScriptHiddenTarget" method="GET" style="display:none;"></form>
-
   <script type="module">
     let ordersData = [];
     let searchQuery = "";
@@ -218,11 +214,11 @@
     const APPS_SCRIPT_SYNC_URL = "https://script.google.com/macros/s/AKfycbwTCFzzch92FFwHS9p7Ejrnqy95bYaJ4Df3XC-BRq8y3nvgTTRuTw_9tEoW1hw1kM9O/exec";
 
     const SAMPLE_INITIAL_ORDERS = [
-      { id: 'ORD-2', sheetRowIndex: 2, orderDate: '2026.10.25', pickupDate: '2026.10.29', nickname: '헬리오1234', productName: 'DAICLO 프리미엄 에어로 쿨링 셔츠', quantity: 2, amount: 58000, status: '픽업예정' },
-      { id: 'ORD-3', sheetRowIndex: 3, orderDate: '2026.10.26', pickupDate: '2026.10.29', nickname: '헬리오1234', productName: 'DAICLO 컴포트 슬랙스 네이비 (L)', quantity: 1, amount: 39000, status: '픽업예정' },
-      { id: 'ORD-4', sheetRowIndex: 4, orderDate: '2026.10.24', pickupDate: '2026.10.28', nickname: '송파러버', productName: 'DAICLO 방수 윈드브레이커 자켓', quantity: 1, amount: 72000, status: '완료', completedAt: '2026.10.28 15:20:10' },
-      { id: 'ORD-5', sheetRowIndex: 5, orderDate: '2026.10.27', pickupDate: '2026.10.30', nickname: '1234', productName: '데일리 오가닉 코튼 티셔츠 3팩', quantity: 1, amount: 29900, status: '픽업예정' },
-      { id: 'ORD-6', sheetRowIndex: 6, orderDate: '2026.10.28', pickupDate: '2026.10.29', nickname: '헬리오패밀리', productName: 'DAICLO 기능성 웜라이트 이너웨어', quantity: 3, amount: 45000, status: '픽업예정' }
+      { id: 'ORD-2', sheetRowIndex: 2, orderDate: '2026.10.25', pickupDate: '2026.10.29', nickname: '헬리오1234', productName: 'DAICLO 프리미엄 에어로 쿨링 셔츠', quantity: 2, amount: 58000, status: '픽업예정', uniqueKey: 'ORD-2_2026.10.25_헬리오1234_DAICLO 프리미엄 에어로 쿨링 셔츠_58000' },
+      { id: 'ORD-3', sheetRowIndex: 3, orderDate: '2026.10.26', pickupDate: '2026.10.29', nickname: '헬리오1234', productName: 'DAICLO 컴포트 슬랙스 네이비 (L)', quantity: 1, amount: 39000, status: '픽업예정', uniqueKey: 'ORD-3_2026.10.26_헬리오1234_DAICLO 컴포트 슬랙스 네이비 (L)_39000' },
+      { id: 'ORD-4', sheetRowIndex: 4, orderDate: '2026.10.24', pickupDate: '2026.10.28', nickname: '송파러버', productName: 'DAICLO 방수 윈드브레이커 자켓', quantity: 1, amount: 72000, status: '완료', completedAt: '2026.10.28 15:20:10', uniqueKey: 'ORD-4_2026.10.24_송파러버_DAICLO 방수 윈드브레이커 자켓_72000' },
+      { id: 'ORD-5', sheetRowIndex: 5, orderDate: '2026.10.27', pickupDate: '2026.10.30', nickname: '1234', productName: '데일리 오가닉 코튼 티셔츠 3팩', quantity: 1, amount: 29900, status: '픽업예정', uniqueKey: 'ORD-5_2026.10.27_1234_데일리 오가닉 코튼 티셔츠 3팩_29900' },
+      { id: 'ORD-6', sheetRowIndex: 6, orderDate: '2026.10.28', pickupDate: '2026.10.29', nickname: '헬리오패밀리', productName: 'DAICLO 기능성 웜라이트 이너웨어', quantity: 3, amount: 45000, status: '픽업예정', uniqueKey: 'ORD-6_2026.10.28_헬리오패밀리_DAICLO 기능성 웜라이트 이너웨어_45000' }
     ];
 
     function setLastUpdatedBadgeTime(targetDate = new Date()) {
@@ -522,7 +518,7 @@
       renderOrders();
     }
 
-    // 픽업 처리 함수: Google Apps Script 전송 및 시트 반영 보장
+    // 픽업 처리 함수: Google Apps Script 전송 및 개별 주문 락 보장
     window.processPickup = function(orderId) {
       const order = ordersData.find(o => o.id === orderId);
       if (!order) {
@@ -538,98 +534,84 @@
       const pad = (n) => String(n).padStart(2, "0");
       const formattedTimestamp = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-      // 1. [UI 즉시 최우선 반영] 클릭하자마자 0초 만에 완료 상태로 화면 갱신
+      // 1. [UI 즉시 최우선 반영] 클릭하자마자 해당 품목만 완료 상태로 즉시 갱신
       order.status = "완료";
       order.completedAt = formattedTimestamp;
       order.processedTime = formattedTimestamp;
 
-      const pureNickname = String(order.nickname || '').trim().toLowerCase();
-      const pureProductName = String(order.productName || '').trim().toLowerCase();
-      const itemUniqueKey = `daiclo_completed_key_${pureNickname}_${pureProductName}`;
-
+      // 타 항목과 절대 겹치지 않도록 이 주문만의 정밀 복합 키로만 로컬스토리지 락 저장
+      const exactOrderKey = order.uniqueKey || `ORD-${order.sheetRowIndex}_${order.orderDate}_${order.nickname}_${order.productName}_${order.amount}`;
       try {
-        localStorage.setItem(`daiclo_completed_${order.id}`, formattedTimestamp);
-        if (order.sheetRowIndex) {
-          localStorage.setItem(`daiclo_completed_row_${order.sheetRowIndex}`, formattedTimestamp);
-        }
-        localStorage.setItem(itemUniqueKey, formattedTimestamp);
+        localStorage.setItem(`daiclo_completed_exact_${exactOrderKey}`, formattedTimestamp);
       } catch (_) {}
 
-      // 클릭 직후 UI 즉시 반영 (네트워크 요청 전 선제적 화면 갱신)
+      // 클릭 직후 UI 즉시 반영 (네트워크 지연 무관하게 즉각적인 화면 응답)
       render();
-      showToast(`[${order.nickname}] 픽업 완료`, "success");
 
-      // 2. 조회이력 D열용 정보 및 Apps Script 전송 데이터 준비
+      // 2. Apps Script 전송 데이터 준비
       const calculatedUnitPrice = order.unitPrice || (order.quantity > 0 ? Math.round(order.amount / order.quantity) : order.amount);
       const pureOrderDate = String(order.orderDate || '-').trim();
       const purePickupDate = String(order.pickupDate || '-').trim();
+      const pureProductName = String(order.productName || '').trim();
       const formattedItemDetail = `${pureOrderDate} / ${purePickupDate} / ${pureProductName || '상품명 없음'} / ${Number(calculatedUnitPrice).toLocaleString()}원 / ${order.quantity}개 / ${Number(order.amount).toLocaleString()}원`;
 
-      const callbackName = "cb_as_" + Date.now();
+      const callbackName = "cb_as_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
       const payload = {
         action: 'updatePickup',
-        method: 'updatePickup',
-        type: 'updatePickup',
         callback: callbackName,
         sheetName: '주문데이터',
-        targetSheet: '주문데이터',
         row: String(order.sheetRowIndex || ''),
-        sheetRowIndex: String(order.sheetRowIndex || ''),
-        rowIndex: String(order.sheetRowIndex || ''),
-        line: String(order.sheetRowIndex || ''),
         nickname: String(order.nickname || '').trim(),
         product: pureProductName,
-        originalProductName: pureProductName,
-        productName: pureProductName,
         orderDate: pureOrderDate,
         pickupDate: purePickupDate,
         unitPrice: String(calculatedUnitPrice),
         quantity: String(order.quantity),
         amount: String(order.amount),
         itemDetail: formattedItemDetail,
-        col4: formattedItemDetail,
         status: '완료',
-        orderStatus: '완료',
-        pickupStatus: '완료',
-        state: '완료',
         pickupTime: formattedTimestamp,
-        completedAt: formattedTimestamp,
-        logType: '픽업',
-        logTime: formattedTimestamp,
         _t: String(Date.now())
       };
 
       const queryParams = new URLSearchParams(payload).toString();
       const targetUrl = APPS_SCRIPT_SYNC_URL + (APPS_SCRIPT_SYNC_URL.includes('?') ? '&' : '?') + queryParams;
 
-      // 3. 백그라운드 콜백 및 전송 처리
-      window[callbackName] = function(res) {
-        delete window[callbackName];
+      // 3. 단일 스크립트 기반 백그라운드 전송 (이중 fetch 제거 및 가비지 정리)
+      let sTag = document.createElement('script');
+      
+      const cleanup = () => {
+        if (sTag && sTag.parentNode) sTag.parentNode.removeChild(sTag);
+        sTag = null;
+        if (window[callbackName]) delete window[callbackName];
         order._processing = false;
       };
 
-      try {
-        fetch(targetUrl, { mode: 'no-cors', method: 'GET' }).catch(() => {});
+      window[callbackName] = function() {
+        cleanup();
+      };
 
-        const sTag = document.createElement('script');
-        sTag.src = targetUrl;
-        sTag.async = true;
-        sTag.onload = () => { 
-          if (sTag.parentNode) sTag.parentNode.removeChild(sTag); 
-          order._processing = false;
-        };
-        sTag.onerror = () => { 
-          if (sTag.parentNode) sTag.parentNode.removeChild(sTag); 
-          order._processing = false;
-        };
-        document.body.appendChild(sTag);
+      sTag.src = targetUrl;
+      sTag.async = true;
+      sTag.onload = () => cleanup();
+      sTag.onerror = () => cleanup();
 
-        // 시트 반영 지연시간 감안하여 백그라운드에서 주기적 동기화
-        setTimeout(() => loadGoogleSheetData(true), 2500);
-      } catch (e) {
-        console.error('시트 전송 실패:', e);
-        order._processing = false;
+      document.body.appendChild(sTag);
+
+      // 픽업 등록 완료 팝업 안내창 표시
+      if (typeof window.showAlert === "function") {
+        window.showAlert(
+          `<div class="space-y-1">
+             <p class="text-xs text-slate-500 font-normal mt-1">${escapeHtml(order.nickname)}님의 물품 픽업 처리가 안전하게 등록되었습니다.</p>
+          </div>`,
+          "픽업 완료"
+        );
+      } else {
+        showToast("픽업완료되었습니다.", "success");
       }
+
+      // 시트 캐시 반영 지연을 감안하여 8초 후 백그라운드 조용히 동기화
+      setTimeout(() => loadGoogleSheetData(true), 8000);
     };
 
     function processRawMatrix(matrix) {
@@ -678,57 +660,62 @@
         if (!nickname) continue;
 
         const productName = (row[colProduct] || "").toString().trim();
-        const pureNickname = nickname.toLowerCase();
-        const pureProductName = productName.toLowerCase();
-        const itemUniqueKey = `daiclo_completed_key_${pureNickname}_${pureProductName}`;
+        const orderDate = (row[colOrderDate] || "").toString().trim() || "-";
+        const pickupDate = (row[colPickupDate] || "").toString().trim() || "-";
+        const quantity = parseInt((row[colQty] || "1").toString().replace(/[^0-9]/g, "")) || 1;
+        const amount = parseFloat((row[colAmount] || row[5] || "0").toString().replace(/[^0-9]/g, "")) || 0;
 
         const statusRaw = (row[colStatus] !== undefined ? row[colStatus] : row[7] || "").toString().trim();
         let status = (statusRaw === "완료" || statusRaw.includes("완료") || statusRaw === "1") ? "완료" : "픽업예정";
 
         const sheetRow = i + 1;
         const orderId = `ORD-${sheetRow}`;
+        // 타 품목이나 타 일자 동일 상품과 절대 겹치지 않는 완전 고유 복합 키
+        const uniqueKey = `${orderId}_${orderDate}_${nickname}_${productName}_${amount}`;
 
-        // 관리자가 구글 시트에서 '픽업예정'으로 수정한 경우 로컬 락 해제
-        if (status === "픽업예정") {
-          try {
-            localStorage.removeItem(`daiclo_completed_${orderId}`);
-            localStorage.removeItem(`daiclo_completed_row_${sheetRow}`);
-            localStorage.removeItem(itemUniqueKey);
-          } catch (_) {}
-        } else {
-          // 시트에 완료로 표시되어 있으면 로컬스토리지 락 최신화
-          try {
-            const timeVal = (row[colTimestampIdx] !== undefined ? row[colTimestampIdx] : (row[8] || "")).toString().trim() || "완료";
-            localStorage.setItem(`daiclo_completed_${orderId}`, timeVal);
-            localStorage.setItem(`daiclo_completed_row_${sheetRow}`, timeVal);
-            localStorage.setItem(itemUniqueKey, timeVal);
-          } catch (_) {}
-        }
-
+        // 로컬스토리지에서 이 주문 건만의 고유 키로 완료 여부 검사
         let savedTimestamp = "";
         try {
-          savedTimestamp = localStorage.getItem(`daiclo_completed_${orderId}`) || 
-                           localStorage.getItem(`daiclo_completed_row_${sheetRow}`) ||
-                           localStorage.getItem(itemUniqueKey) || "";
+          savedTimestamp = localStorage.getItem(`daiclo_completed_exact_${uniqueKey}`) || "";
         } catch (_) {}
 
-        // 로컬스토리지 완료 락 적용
-        if (savedTimestamp && status !== "완료") {
-          status = "완료";
+        const colTimestamp = (row[colTimestampIdx] !== undefined ? row[colTimestampIdx] : (row[8] || "")).toString().trim();
+
+        // [DB UPDATE 및 시트 최신화 로직 수정]
+        // 1) 시트에서 명시적으로 '완료'인 경우: 로컬스토리지 최신화
+        if (status === "완료") {
+          const timeVal = colTimestamp || savedTimestamp || "완료";
+          try {
+            localStorage.setItem(`daiclo_completed_exact_${uniqueKey}`, timeVal);
+          } catch (_) {}
+        } 
+        // 2) 관리자가 DB UPDATE를 실행했거나, 시트에 '픽업예정'으로 명시 변경된 경우:
+        // 시트 원본 데이터를 최우선(Source of Truth)으로 삼아 로컬 락을 해제하고 시트 상태를 그대로 반영
+        else if (status === "픽업예정") {
+          if (isUserDbUpdateRequested) {
+            // 관리자가 DB UPDATE를 눌렀을 때는 시트 상태를 절대적으로 신뢰하여 로컬 캐시 삭제
+            try {
+              localStorage.removeItem(`daiclo_completed_exact_${uniqueKey}`);
+            } catch (_) {}
+            savedTimestamp = "";
+          } else if (savedTimestamp) {
+            // 일반 자동조회 시에는 방금 앱에서 픽업 버튼을 누른 건을 보호 (최대 1시간 유효)
+            status = "완료";
+          }
         }
 
-        const colTimestamp = (row[colTimestampIdx] !== undefined ? row[colTimestampIdx] : (row[8] || "")).toString().trim();
         const finalTimestamp = colTimestamp || savedTimestamp || null;
 
         results.push({
           id: orderId,
+          uniqueKey: uniqueKey,
           sheetRowIndex: sheetRow,
-          orderDate: (row[colOrderDate] || "").toString().trim() || "-",
-          pickupDate: (row[colPickupDate] || "").toString().trim() || "-",
+          orderDate: orderDate,
+          pickupDate: pickupDate,
           nickname: nickname,
           productName: productName,
-          quantity: parseInt((row[colQty] || "1").toString().replace(/[^0-9]/g, "")) || 1,
-          amount: parseFloat((row[colAmount] || row[5] || "0").toString().replace(/[^0-9]/g, "")) || 0,
+          quantity: quantity,
+          amount: amount,
           status: status,
           completedAt: status === "완료" ? finalTimestamp : null,
           processedTime: status === "완료" ? finalTimestamp : null
@@ -793,7 +780,9 @@
         }
       }, 3500);
 
-      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent("설정")}&tqx=responseHandler:${callbackName}&_t=${Date.now()}`;
+      // 캐시 방지 파라미터 강화 (t, nocache, rand)
+      const cacheBust = `_t=${Date.now()}&_r=${Math.random().toString(36).substring(2, 9)}&nocache=1`;
+      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent("설정")}&tqx=responseHandler:${callbackName}&${cacheBust}`;
       script.onerror = () => {
         if (timeoutHandler) clearTimeout(timeoutHandler);
         if (window[callbackName]) {
@@ -827,7 +816,7 @@
           if (isUserDbUpdateRequested) {
             isUserDbUpdateRequested = false;
             if (typeof window.showAlert === "function") {
-              window.showAlert("<strong>DB UPDATE가 정상적으로 완료되었습니다.</strong><br><span class='text-xs text-slate-500 mt-1.5 block font-normal'>구글 시트의 최신 주문 데이터가 성공적으로 반영되었습니다.</span>", "업데이트 완료");
+              window.showAlert("<strong>DB UPDATE가 정상적으로 완료되었습니다.</strong><br><span class='text-xs text-slate-500 mt-1.5 block font-normal'>구글 시트의 최신 주문 데이터(수정/취소/추가)가 성공적으로 동기화되었습니다.</span>", "업데이트 완료");
             } else {
               showToast("DB UPDATE가 완료되었습니다.", "success");
             }
@@ -854,11 +843,13 @@
         }
       }, 4000);
 
-      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent("주문데이터")}&tqx=responseHandler:${callbackName}&_t=${Date.now()}`;
+      // 캐시 방지 파라미터 강화 (t, nocache, rand)
+      const cacheBust = `_t=${Date.now()}&_r=${Math.random().toString(36).substring(2, 9)}&nocache=1`;
+      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent("주문데이터")}&tqx=responseHandler:${callbackName}&${cacheBust}`;
       script.onerror = () => {
         if (timeoutHandler) clearTimeout(timeoutHandler);
         const fallbackScript = document.createElement("script");
-        fallbackScript.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}&_t=${Date.now()}`;
+        fallbackScript.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}&${cacheBust}`;
         document.body.appendChild(fallbackScript);
       };
       document.body.appendChild(script);
