@@ -108,6 +108,16 @@
         <span id="sideMenuPendingBadge" class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-0.5 rounded-full font-bold">0건</span>
       </button>
 
+      <!-- 신규 추가: 포인트 지급/사용 처리 메뉴 -->
+      <button id="sideMenuPointBtn" type="button"
+        class="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-slate-800 hover:bg-emerald-50 hover:text-emerald-950 font-extrabold text-sm transition-colors cursor-pointer text-left group">
+        <div class="flex items-center gap-3.5">
+          <i data-lucide="coins" class="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform"></i>
+          <span>포인트 지급/사용 처리</span>
+        </div>
+        <span class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-bold">Point</span>
+      </button>
+
       <button id="sideMenuSyncBtn" type="button"
         class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl text-slate-700 hover:bg-emerald-50 hover:text-emerald-950 font-bold text-sm transition-colors cursor-pointer text-left">
         <i data-lucide="refresh-ccw" class="w-5 h-5 text-emerald-700"></i>
@@ -203,13 +213,13 @@
     </div>
   </div>
 
-  <!-- 커스텀 안내 팝업 -->
-  <div id="customAlertModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-emerald-950/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 p-8 text-center border border-emerald-100" id="customAlertContent">
-      <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-emerald-100">
-        <i data-lucide="info" class="w-7 h-7"></i>
+  <!-- 커스텀 안내 팝업 (모든 모달보다 상단에 위치하도록 z-[90] 부여) -->
+  <div id="customAlertModal" class="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-emerald-950/75 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 p-8 text-center border border-emerald-100 ring-1 ring-black/5" id="customAlertContent">
+      <div class="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-rose-100" id="customAlertIconBox">
+        <i data-lucide="alert-circle" class="w-7 h-7" id="customAlertIcon"></i>
       </div>
-      <h3 class="text-xl font-extrabold text-slate-800 mb-3" id="alertTitle">안내</h3>
+      <h3 class="text-xl font-extrabold text-slate-900 mb-3" id="alertTitle">안내</h3>
       <p id="customAlertMessage" class="text-sm text-slate-600 mb-8 leading-relaxed font-medium"></p>
       
       <button id="closeAlertBtn" type="button" class="w-full px-4 py-3.5 text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 font-bold rounded-xl transition-all shadow-md cursor-pointer">
@@ -352,13 +362,216 @@
     </div>
   </div>
 
+  <!-- 포인트 지급/사용 처리 모달 -->
+  <div id="pointManageModal" class="fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-4 bg-emerald-950/75 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-6xl h-[88vh] max-h-[820px] min-h-[560px] flex flex-col transform scale-95 transition-all duration-300 overflow-hidden border border-emerald-100 ring-1 ring-black/5" id="pointManageModalContent">
+      <!-- 상단 헤더 -->
+      <div class="p-4 sm:p-5 border-b border-emerald-100 flex justify-between items-center bg-gradient-to-r from-amber-500/10 via-emerald-50/80 to-teal-50/80 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
+            <i data-lucide="coins" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">포인트 지급/사용 처리</h3>
+              <span class="px-2.5 py-0.5 text-xs font-black rounded-full bg-amber-100 text-amber-900 border border-amber-200">구글시트 포인트 연동</span>
+            </div>
+            <p class="text-[11px] sm:text-xs text-slate-600 font-medium mt-0.5">왼쪽에서 회원을 검색·선택하여 오른쪽에서 포인트 적립/사용 내역 확인 및 신규 처리를 진행합니다.</p>
+          </div>
+        </div>
+        <button id="closePointManageBtn" type="button" aria-label="닫기" class="w-9 h-9 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 본문: [좌측 레이아웃] 회원 조회 목록 + [우측 레이아웃] 선택 회원의 포인트 내역 및 등록 -->
+      <div class="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden bg-slate-50/60">
+        <!-- [좌측 레이아웃: 회원 조회] -->
+        <div class="w-full md:w-[320px] lg:w-[340px] shrink-0 border-b md:border-b-0 md:border-r border-slate-200 bg-white flex flex-col">
+          <!-- 닉네임 검색 바 -->
+          <div class="p-3 border-b border-slate-200 bg-emerald-50/40 shrink-0">
+            <div class="flex items-center gap-1.5">
+              <div class="relative flex-1">
+                <input type="text" id="pointMemberSearchInput" placeholder="회원 닉네임 검색..." autocomplete="off"
+                  class="w-full pl-8 pr-3 py-2 text-xs font-bold rounded-xl border border-emerald-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-emerald-600 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+              </div>
+              <!-- 신규 회원 추가 버튼 (+) -->
+              <button id="addNewPointMemberBtn" type="button" title="신규 닉네임 추가"
+                class="px-2.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white flex items-center justify-center gap-1 text-xs font-bold shadow-xs transition-all cursor-pointer shrink-0">
+                <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                <span class="hidden sm:inline">추가</span>
+              </button>
+            </div>
+            <div class="flex items-center justify-between mt-2 px-1 text-[11px] text-slate-500 font-medium">
+              <span>포인트 등록 회원: <strong id="pointMemberCountBadge" class="text-emerald-800 font-bold">0</strong>명</span>
+              <button id="refreshPointDataBtn" type="button" class="text-emerald-700 hover:text-emerald-900 flex items-center gap-1 cursor-pointer font-bold">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                <span>새로고침</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 회원 리스트 스크롤 영역 -->
+          <div class="flex-1 overflow-y-auto p-2 space-y-1.5 custom-scroll" id="pointMemberListContainer">
+            <!-- 회원 리스트가 동적으로 생성됩니다 -->
+          </div>
+        </div>
+
+        <!-- [우측 레이아웃: 선택 회원의 포인트 적립/사용 내역 및 처리] -->
+        <div class="flex-1 min-w-0 min-h-0 flex flex-col bg-slate-50/70" id="pointDetailRightPanel">
+          <!-- 회원 미선택 시 초기 안내 화면 -->
+          <div id="pointNoMemberSelectedPrompt" class="flex-1 flex flex-col items-center justify-center p-6 text-center select-none">
+            <div class="w-14 h-14 bg-amber-100/80 rounded-2xl flex items-center justify-center text-amber-600 mb-3 border border-amber-200 shadow-inner">
+              <i data-lucide="user-search" class="w-7 h-7"></i>
+            </div>
+            <h4 class="text-base font-extrabold text-slate-800">회원을 선택해주세요</h4>
+            <p class="text-xs text-slate-500 mt-1 max-w-xs leading-relaxed">
+              왼쪽 회원 목록에서 회원을 클릭하시면 해당 회원의 포인트 적립/사용 내역 조회 및 신규 지급 처리를 하실 수 있습니다.
+            </p>
+          </div>
+
+          <!-- 회원 선택 시 표시되는 상세 뷰 -->
+          <div id="pointMemberDetailView" class="hidden flex-1 min-h-0 flex flex-col">
+            <!-- 1. 선택 회원 요약 헤더 카드 -->
+            <div class="p-3.5 sm:p-4 bg-white border-b border-slate-200 shrink-0 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                  <i data-lucide="user" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h4 class="text-base sm:text-lg font-black text-slate-900" id="selectedMemberNickname">닉네임</h4>
+                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold" id="selectedMemberTxCount">총 0건</span>
+                  </div>
+                  <p class="text-xs text-slate-400">회원 포인트 거래 상세</p>
+                </div>
+              </div>
+
+              <!-- 포인트 요약 집계 뱃지 카드들 -->
+              <div class="flex items-center gap-2">
+                <div class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-right">
+                  <div class="text-[10px] text-emerald-700 font-bold">누적 적립</div>
+                  <div class="text-xs sm:text-sm font-black text-emerald-800" id="memberTotalEarnBadge">0P</div>
+                </div>
+                <div class="px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-right">
+                  <div class="text-[10px] text-rose-700 font-bold">누적 사용</div>
+                  <div class="text-xs sm:text-sm font-black text-rose-800" id="memberTotalUseBadge">0P</div>
+                </div>
+                <div class="px-3.5 py-1.5 rounded-xl bg-amber-500 text-white text-right shadow-xs">
+                  <div class="text-[10px] text-amber-100 font-bold">잔여 포인트</div>
+                  <div class="text-xs sm:text-sm font-black text-white" id="memberBalanceBadge">0P</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. 신규 포인트 지급/사용 등록 접이식 간편 폼 -->
+            <div class="p-3 bg-gradient-to-r from-emerald-50/50 to-amber-50/50 border-b border-slate-200 shrink-0">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1">
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+                  포인트 지급 / 사용 등록
+                </span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                <!-- 지급/사용 토글 -->
+                <div class="sm:col-span-3 flex rounded-xl border border-slate-200 bg-white p-0.5">
+                  <button type="button" id="memberPointTypeEarnBtn" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-500 text-white transition-all cursor-pointer">
+                    지급(적립)
+                  </button>
+                  <button type="button" id="memberPointTypeUseBtn" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer">
+                    사용
+                  </button>
+                </div>
+                <!-- 날짜 -->
+                <div class="sm:col-span-3">
+                  <input type="date" id="memberPointDate" class="w-full px-2.5 py-1.5 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                </div>
+                <!-- 금액 -->
+                <div class="sm:col-span-2 relative flex items-center">
+                  <input type="number" id="memberPointAmount" placeholder="금액P" min="0" step="10"
+                    class="w-full px-2.5 py-1.5 pr-6 text-xs font-extrabold rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                  <span class="absolute right-2 text-[10px] font-bold text-slate-400 pointer-events-none">P</span>
+                </div>
+                <!-- 내역/사유 -->
+                <div class="sm:col-span-3">
+                  <input type="text" id="memberPointDetail" placeholder="적립/사용 사유 입력"
+                    class="w-full px-2.5 py-1.5 text-xs font-medium rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                </div>
+                <!-- 등록 버튼 -->
+                <div class="sm:col-span-1">
+                  <button id="memberPointSubmitBtn" type="button"
+                    class="w-full h-full py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center cursor-pointer">
+                    등록
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. 선택된 회원의 포인트 적립/사용 내역 테이블 -->
+            <div class="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-auto custom-scroll flex flex-col">
+              <!-- 헤더 -->
+              <div class="min-w-[560px] px-3 py-2 bg-slate-100 border-b border-slate-200 flex items-center gap-2 text-xs font-bold text-slate-600 shrink-0 select-none">
+                <span class="w-8 text-center shrink-0">No</span>
+                <span class="w-24 shrink-0">날짜</span>
+                <span class="w-20 text-center shrink-0">구분</span>
+                <span class="w-24 text-right shrink-0">포인트</span>
+                <span class="flex-1 min-w-0 px-2">적립 / 사용 내역</span>
+              </div>
+
+              <!-- 리스트 항목들 -->
+              <div class="p-2 space-y-1.5 flex-1 min-w-[560px]" id="memberPointHistoryList">
+                <!-- 선택된 회원의 포인트 거래 내역이 여기에 렌더링됩니다 -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 팝업 푸터 -->
+      <div class="p-3 border-t border-slate-200 bg-white flex justify-end items-center shrink-0">
+        <button id="closePointManageFooterBtn" type="button" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 text-xs font-bold transition-all cursor-pointer">
+          닫기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 신규 회원(닉네임) 추가 입력 모달 -->
+  <div id="addMemberPromptModal" class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-emerald-950/70 backdrop-blur-xs opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-transform duration-300 p-6 text-center border border-emerald-100" id="addMemberPromptContent">
+      <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
+        <i data-lucide="user-plus" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-lg font-black text-slate-900 mb-1">신규 회원(닉네임) 추가</h3>
+      <p class="text-xs text-slate-500 mb-4 leading-relaxed">포인트를 지급할 회원의 닉네임을 입력해주세요.</p>
+      
+      <input type="text" id="newMemberNicknameInput" placeholder="예: 헬리오9999" autocomplete="off"
+        class="w-full px-4 py-3 rounded-xl border-2 border-emerald-200 text-center text-sm font-bold text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all mb-4">
+      
+      <div class="flex gap-2">
+        <button id="cancelAddMemberBtn" type="button" class="flex-1 py-2.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer">
+          취소
+        </button>
+        <button id="confirmAddMemberBtn" type="button" class="flex-1 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-95 rounded-xl transition-all shadow-xs cursor-pointer">
+          추가하기
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     let ordersData = [];
+    let pointData = [];
+    let extraAddedMembers = []; // 신규 '+' 버튼으로 추가된 회원 닉네임 임시 보존 목록
+    let currentPointMode = "earn"; // "earn" (적립/지급) or "use" (사용)
+    let selectedPointMember = ""; // 좌측에서 현재 선택된 회원 닉네임
     let searchQuery = "";
     let activeSelectedNickname = "";
     let multiNicknameChoices = [];
     let adminPassword = "0718"; 
     let isUserDbUpdateRequested = false;
+    let isPointSubmitting = false; // 중복 전송 원천 방지 전역 락 변수
 
     // 달력 상태 관리 변수
     let calCurrentYear = new Date().getFullYear();
@@ -367,7 +580,7 @@
 
     const SHEET_ID = "11OG6u2i64D6exMiBgqGbkq-wrmxrYrVfLSzbYsBoXC8";
     // 최신 Google Apps Script Web App 배포 URL
-    const APPS_SCRIPT_SYNC_URL = "https://script.google.com/macros/s/AKfycbwTCFzzch92FFwHS9p7Ejrnqy95bYaJ4Df3XC-BRq8y3nvgTTRuTw_9tEoW1hw1kM9O/exec";
+    const APPS_SCRIPT_SYNC_URL = "https://script.google.com/macros/s/AKfycbzEIMvYKBHAOACFHhEJzqLwnfG7ReGzJhSbDXaAhmpgF7ihsRtJ33PKHN-o-mXkhoLG/exec";
 
     const SAMPLE_INITIAL_ORDERS = [
       { id: 'ORD-2', sheetRowIndex: 2, orderDate: '2026.10.25', pickupDate: '2026.10.29', nickname: '헬리오1234', productName: 'DAICLO 프리미엄 에어로 쿨링 셔츠', quantity: 2, amount: 58000, status: '픽업예정', uniqueKey: 'ORD-2_2026.10.25_헬리오1234_DAICLO 프리미엄 에어로 쿨링 셔츠_58000' },
@@ -399,10 +612,22 @@
       const content = document.getElementById("customAlertContent");
       const msgElem = document.getElementById("customAlertMessage");
       const titleElem = document.getElementById("alertTitle");
+      const iconBox = document.getElementById("customAlertIconBox");
+      const icon = document.getElementById("customAlertIcon");
       if (!modal || !content || !msgElem) return;
 
       if (titleElem) titleElem.textContent = title;
       msgElem.innerHTML = message;
+
+      // 경고/부족 등 특정 제목일 때 아이콘 및 테마 스타일 맞춤
+      if (title.includes("부족") || title.includes("실패") || title.includes("오류") || title.includes("없음")) {
+        if (iconBox) iconBox.className = "w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-rose-100";
+        if (icon) icon.setAttribute("data-lucide", "alert-triangle");
+      } else {
+        if (iconBox) iconBox.className = "w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-emerald-100";
+        if (icon) icon.setAttribute("data-lucide", "info");
+      }
+
       modal.classList.remove("opacity-0", "pointer-events-none");
       content.classList.remove("scale-95");
       if (window.lucide) lucide.createIcons();
@@ -1453,6 +1678,161 @@
         });
       }
 
+      // 포인트 지급/사용 처리 메뉴 및 모달 연동
+      const sideMenuPointBtn = document.getElementById("sideMenuPointBtn");
+      const pointManageModal = document.getElementById("pointManageModal");
+      const pointManageModalContent = document.getElementById("pointManageModalContent");
+      const closePointManageBtn = document.getElementById("closePointManageBtn");
+      const closePointManageFooterBtn = document.getElementById("closePointManageFooterBtn");
+
+      const openPointManageModal = () => {
+        if (!pointManageModal || !pointManageModalContent) return;
+        // 오늘 날짜 세팅
+        const todayStr = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById("memberPointDate");
+        if (dateInput && !dateInput.value) dateInput.value = todayStr;
+
+        pointManageModal.classList.remove("opacity-0", "pointer-events-none");
+        pointManageModalContent.classList.remove("scale-95");
+        
+        loadPointSheetData(true);
+      };
+
+      const closePointManageModal = () => {
+        if (!pointManageModal || !pointManageModalContent) return;
+        pointManageModal.classList.add("opacity-0", "pointer-events-none");
+        pointManageModalContent.classList.add("scale-95");
+      };
+
+      if (sideMenuPointBtn) {
+        sideMenuPointBtn.addEventListener("click", () => {
+          closeSideMenu();
+          openPointManageModal();
+        });
+      }
+
+      if (closePointManageBtn) closePointManageBtn.addEventListener("click", closePointManageModal);
+      if (closePointManageFooterBtn) closePointManageFooterBtn.addEventListener("click", closePointManageModal);
+
+      if (pointManageModal) {
+        pointManageModal.addEventListener("click", (e) => {
+          if (e.target === pointManageModal) closePointManageModal();
+        });
+      }
+
+      // 좌측 회원 검색 인풋 이벤트
+      const pointMemberSearchInput = document.getElementById("pointMemberSearchInput");
+      if (pointMemberSearchInput) {
+        pointMemberSearchInput.addEventListener("input", renderPointMemberList);
+      }
+
+      // '+' 신규 회원 추가 모달 이벤트 연동
+      const addNewPointMemberBtn = document.getElementById("addNewPointMemberBtn");
+      const addMemberPromptModal = document.getElementById("addMemberPromptModal");
+      const addMemberPromptContent = document.getElementById("addMemberPromptContent");
+      const cancelAddMemberBtn = document.getElementById("cancelAddMemberBtn");
+      const confirmAddMemberBtn = document.getElementById("confirmAddMemberBtn");
+      const newMemberNicknameInput = document.getElementById("newMemberNicknameInput");
+
+      const toggleAddMemberModal = (show) => {
+        if (!addMemberPromptModal || !addMemberPromptContent) return;
+        addMemberPromptModal.classList.toggle("opacity-0", !show);
+        addMemberPromptModal.classList.toggle("pointer-events-none", !show);
+        addMemberPromptContent.classList.toggle("scale-95", !show);
+        if (show && newMemberNicknameInput) {
+          newMemberNicknameInput.value = "";
+          setTimeout(() => newMemberNicknameInput.focus(), 150);
+        }
+      };
+
+      if (addNewPointMemberBtn) {
+        addNewPointMemberBtn.addEventListener("click", () => toggleAddMemberModal(true));
+      }
+      if (cancelAddMemberBtn) {
+        cancelAddMemberBtn.addEventListener("click", () => toggleAddMemberModal(false));
+      }
+
+      const executeAddMember = () => {
+        if (!newMemberNicknameInput) return;
+        const rawNick = newMemberNicknameInput.value.trim();
+        if (!rawNick) {
+          showToast("닉네임을 입력해주세요.", "error");
+          newMemberNicknameInput.focus();
+          return;
+        }
+
+        const normKey = rawNick.toLowerCase();
+        if (!extraAddedMembers.some(m => m.toLowerCase() === normKey)) {
+          extraAddedMembers.push(rawNick);
+        }
+
+        selectedPointMember = rawNick;
+        toggleAddMemberModal(false);
+        renderPointMemberList();
+        renderSelectedMemberDetail();
+        showToast(`'${rawNick}' 회원이 추가되었습니다. 포인트를 지급해주세요.`, "success");
+      };
+
+      if (confirmAddMemberBtn) {
+        confirmAddMemberBtn.addEventListener("click", executeAddMember);
+      }
+      if (newMemberNicknameInput) {
+        newMemberNicknameInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") executeAddMember();
+        });
+      }
+
+      // 포인트 데이터 새로고침 버튼
+      const refreshPointDataBtn = document.getElementById("refreshPointDataBtn");
+      if (refreshPointDataBtn) {
+        refreshPointDataBtn.addEventListener("click", () => loadPointSheetData(false));
+      }
+
+      // 우측 폼 포인트 구분 토글 (지급/적립 vs 사용)
+      const memberPointTypeEarnBtn = document.getElementById("memberPointTypeEarnBtn");
+      const memberPointTypeUseBtn = document.getElementById("memberPointTypeUseBtn");
+      const memberPointDetail = document.getElementById("memberPointDetail");
+      const memberPointSubmitBtn = document.getElementById("memberPointSubmitBtn");
+
+      const setMemberPointMode = (mode) => {
+        currentPointMode = mode;
+        if (mode === "earn") {
+          memberPointTypeEarnBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-500 text-white transition-all cursor-pointer";
+          memberPointTypeUseBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer";
+          if (memberPointDetail) memberPointDetail.placeholder = "적립 사유 (예: 구매 리워드, 이벤트)";
+          if (memberPointSubmitBtn) {
+            memberPointSubmitBtn.className = "w-full h-full py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center cursor-pointer";
+            memberPointSubmitBtn.textContent = "지급";
+          }
+        } else {
+          memberPointTypeEarnBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer";
+          memberPointTypeUseBtn.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-rose-500 text-white transition-all cursor-pointer";
+          if (memberPointDetail) memberPointDetail.placeholder = "사용 사유 (예: 결제 차감, 현장 할인)";
+          if (memberPointSubmitBtn) {
+            memberPointSubmitBtn.className = "w-full h-full py-1.5 px-2 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center cursor-pointer";
+            memberPointSubmitBtn.textContent = "차감";
+          }
+        }
+      };
+
+      if (memberPointTypeEarnBtn) memberPointTypeEarnBtn.addEventListener("click", () => setMemberPointMode("earn"));
+      if (memberPointTypeUseBtn) memberPointTypeUseBtn.addEventListener("click", () => setMemberPointMode("use"));
+      if (memberPointSubmitBtn) memberPointSubmitBtn.addEventListener("click", submitMemberPointRecord);
+
+      // 엔터키 입력 시 중복 전송 방지하며 등록 트리거
+      const memberPointAmountInput = document.getElementById("memberPointAmount");
+      const memberPointDetailInput = document.getElementById("memberPointDetail");
+      [memberPointAmountInput, memberPointDetailInput].forEach(elem => {
+        if (elem) {
+          elem.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              submitMemberPointRecord();
+            }
+          });
+        }
+      });
+
       // 사이드 메뉴 내 DB UPDATE 버튼: 비밀번호 없이 즉시 동기화 실행
       const sideMenuSyncBtn = document.getElementById("sideMenuSyncBtn");
       if (sideMenuSyncBtn) {
@@ -1529,6 +1909,634 @@
 
       if (window.lucide) lucide.createIcons();
     });
+
+    // 포인트 탭 닉네임 자동완성 옵션 목록 채우기
+    function updatePointNicknameDataList() {
+      const dataList = document.getElementById("pointNicknameDataList");
+      if (!dataList) return;
+      dataList.innerHTML = "";
+      const allNicknames = [...new Set(ordersData.map(o => (o.nickname || "").trim()).filter(Boolean))];
+      allNicknames.forEach(nick => {
+        const opt = document.createElement("option");
+        opt.value = nick;
+        dataList.appendChild(opt);
+      });
+    }
+
+    // 구글 시트 '포인트' 탭 데이터 조회 (GViz API)
+    function loadPointSheetData(isSilent = true) {
+      if (!isSilent) showToast("포인트 내역 조회 중...", "info");
+
+      const callbackName = "cb_point_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+      const script = document.createElement("script");
+      let timeoutHandler = null;
+
+      window[callbackName] = function(data) {
+        if (timeoutHandler) clearTimeout(timeoutHandler);
+        if (script.parentNode) script.parentNode.removeChild(script);
+        delete window[callbackName];
+
+        if (data && data.table && data.table.rows) {
+          const matrix = data.table.rows.map(row => (row.c || []).map(c => c ? (c.f !== undefined && c.f !== null ? c.f : (c.v !== undefined && c.v !== null ? c.v : "")) : ""));
+          pointData = parsePointMatrix(matrix);
+
+          // [시트 데이터와 extraAddedMembers 동기화 및 유령 닉네임 자동 정리]
+          // 시트 포인트 탭 및 주문데이터 탭에 실제로 존재하는 닉네임 목록 수집
+          const validPointNicks = new Set(pointData.map(p => (p.nickname || "").trim().toLowerCase()).filter(Boolean));
+          const validOrderNicks = new Set(ordersData.map(o => (o.nickname || "").trim().toLowerCase()).filter(Boolean));
+
+          // 사용자가 구글 시트에서 삭제한 닉네임(예: '111')은 extraAddedMembers에서도 자동 제거
+          extraAddedMembers = extraAddedMembers.filter(nick => {
+            const key = nick.trim().toLowerCase();
+            return validPointNicks.has(key) || validOrderNicks.has(key);
+          });
+
+          // 현재 선택된 닉네임이 시트 어디에도 존재하지 않고 내역도 없다면 선택 해제
+          if (selectedPointMember) {
+            const curKey = selectedPointMember.trim().toLowerCase();
+            const existsInPoint = validPointNicks.has(curKey);
+            const existsInOrder = validOrderNicks.has(curKey);
+            const existsInExtra = extraAddedMembers.some(m => m.trim().toLowerCase() === curKey);
+            if (!existsInPoint && !existsInOrder && !existsInExtra) {
+              selectedPointMember = "";
+            }
+          }
+
+          renderPointMemberList();
+          if (selectedPointMember) {
+            renderSelectedMemberDetail();
+          } else {
+            const promptView = document.getElementById("pointNoMemberSelectedPrompt");
+            const detailView = document.getElementById("pointMemberDetailView");
+            if (promptView) promptView.classList.remove("hidden");
+            if (detailView) detailView.classList.add("hidden");
+          }
+          if (!isSilent) showToast("포인트 내역이 동기화되었습니다.", "success");
+        }
+      };
+
+      timeoutHandler = setTimeout(() => {
+        if (window[callbackName]) {
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+      }, 4000);
+
+      const cacheBust = `_t=${Date.now()}&_r=${Math.random().toString(36).substring(2, 9)}&nocache=1`;
+      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${encodeURIComponent("포인트")}&tqx=responseHandler:${callbackName}&${cacheBust}`;
+      script.onerror = () => {
+        if (timeoutHandler) clearTimeout(timeoutHandler);
+        if (window[callbackName]) {
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+      };
+      document.body.appendChild(script);
+    }
+
+    // 포인트 탭 행 데이터 파싱
+    function parsePointMatrix(matrix) {
+      if (!matrix || matrix.length === 0) return [];
+      let headerRowIndex = -1;
+
+      // 헤더 행 탐색
+      for (let i = 0; i < Math.min(matrix.length, 5); i++) {
+        const rowStr = (matrix[i] || []).map(v => String(v || "")).join(" ");
+        if (rowStr.includes("닉네임") || rowStr.includes("적립") || rowStr.includes("포인트") || rowStr.includes("사용")) {
+          headerRowIndex = i;
+          break;
+        }
+      }
+
+      // 기본 열 인덱스 (A: 날짜, B: 닉네임, C: 포인트적립, D: 적립내역, E: 포인트사용, F: 포인트사용내역)
+      let colDate = 0;
+      let colNickname = 1;
+      let colEarn = 2;
+      let colEarnDetail = 3;
+      let colUse = 4;
+      let colUseDetail = 5;
+
+      if (headerRowIndex >= 0) {
+        const headers = matrix[headerRowIndex].map(h => String(h || "").trim().replace(/\s+/g, ""));
+        headers.forEach((h, idx) => {
+          if (h.includes("날짜") || h.includes("일자")) colDate = idx;
+          else if (h.includes("닉네임") || h.includes("회원")) colNickname = idx;
+          else if (h.includes("적립내역") || h.includes("지급내역")) colEarnDetail = idx;
+          else if (h.includes("포인트적립") || h.includes("적립") || h.includes("지급")) {
+            if (!h.includes("내역")) colEarn = idx;
+          }
+          else if (h.includes("사용내역")) colUseDetail = idx;
+          else if (h.includes("포인트사용") || h.includes("사용")) {
+            if (!h.includes("내역")) colUse = idx;
+          }
+        });
+      }
+
+      const offset = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
+      const results = [];
+
+      for (let i = offset; i < matrix.length; i++) {
+        const row = matrix[i];
+        if (!row || row.length === 0) continue;
+
+        // 닉네임 정규화 (전후 공백 및 내부 연속 공백 제거)
+        const rawNick = row[colNickname] !== undefined ? row[colNickname] : (row[1] || "");
+        const nickname = String(rawNick || "").trim().replace(/\s+/g, " ");
+
+        // 헤더 행이 데이터로 오인된 경우 스킵
+        if (!nickname || nickname === "닉네임" || nickname === "회원명") continue;
+
+        // 날짜 파싱
+        const rawDate = row[colDate] !== undefined ? row[colDate] : (row[0] || "");
+        let dateVal = String(rawDate || "").trim();
+        if (dateVal.includes("Date(")) {
+          const m = dateVal.match(/Date\((\d+),\s*(\d+),\s*(\d+)/);
+          if (m) {
+            const pad = (n) => String(n).padStart(2, '0');
+            dateVal = `${m[1]}-${pad(Number(m[2]) + 1)}-${pad(m[3])}`;
+          }
+        }
+
+        // 적립금 및 사용금액 정밀 파싱 (숫자만 추출)
+        const rawEarn = row[colEarn] !== undefined ? row[colEarn] : (row[2] || "0");
+        const earnPoint = parseInt(String(rawEarn).replace(/[^0-9]/g, ""), 10) || 0;
+
+        const rawEarnDetail = row[colEarnDetail] !== undefined ? row[colEarnDetail] : (row[3] || "");
+        const earnDetail = String(rawEarnDetail || "").trim();
+
+        const rawUse = row[colUse] !== undefined ? row[colUse] : (row[4] || "0");
+        const usePoint = parseInt(String(rawUse).replace(/[^0-9]/g, ""), 10) || 0;
+
+        const rawUseDetail = row[colUseDetail] !== undefined ? row[colUseDetail] : (row[5] || "");
+        const useDetail = String(rawUseDetail || "").trim();
+
+        // 유효한 거래 내역인지 검증 (닉네임이 있고 적립/사용 중 하나라도 금액 또는 사유가 있는 경우)
+        if (earnPoint > 0 || usePoint > 0 || earnDetail || useDetail) {
+          results.push({
+            date: dateVal || "-",
+            nickname: nickname,
+            earnPoint: earnPoint,
+            earnDetail: earnDetail,
+            usePoint: usePoint,
+            useDetail: useDetail
+          });
+        }
+      }
+
+      return results.reverse();
+    }
+
+    // [좌측 레이아웃] 회원 리스트 렌더링
+    function renderPointMemberList() {
+      const container = document.getElementById("pointMemberListContainer");
+      const searchInput = document.getElementById("pointMemberSearchInput");
+      const countBadge = document.getElementById("pointMemberCountBadge");
+      if (!container) return;
+
+      container.innerHTML = "";
+
+      // 1. 포인트탭 회원 vs 주문데이터탭 회원 분류 수집
+      const pointNicknamesMap = new Map(); // 포인트 탭 회원
+      const orderOnlyNicknamesMap = new Map(); // 주문데이터 전용 회원
+
+      // (1) 구글 시트 포인트 탭 및 추가(+) 회원 우선 수집
+      pointData.forEach(p => {
+        if (p.nickname && p.nickname.trim()) {
+          const trimmed = p.nickname.trim();
+          const key = trimmed.toLowerCase();
+          if (!pointNicknamesMap.has(key)) pointNicknamesMap.set(key, trimmed);
+        }
+      });
+
+      // extraAddedMembers 중 실제 시트 포인트 탭에 내역이 남아있거나 현재 선택 중인 경우만 노출
+      extraAddedMembers.forEach(nick => {
+        if (nick && nick.trim()) {
+          const trimmed = nick.trim();
+          const key = trimmed.toLowerCase();
+          // 시트 포인트 탭이나 주문데이터에 존재하거나, 방금 추가하여 현재 선택 상태인 신규 회원만 유지
+          const isSelected = selectedPointMember.trim().toLowerCase() === key;
+          const hasPointHistory = pointData.some(p => (p.nickname || "").trim().toLowerCase() === key);
+          if ((isSelected || hasPointHistory) && !pointNicknamesMap.has(key)) {
+            pointNicknamesMap.set(key, trimmed);
+          }
+        }
+      });
+
+      // (2) 구글 시트 주문데이터 탭 닉네임 수집 (포인트 탭에 없는 회원만 분리)
+      ordersData.forEach(o => {
+        if (o.nickname && o.nickname.trim()) {
+          const trimmed = o.nickname.trim();
+          const key = trimmed.toLowerCase();
+          if (!pointNicknamesMap.has(key) && !orderOnlyNicknamesMap.has(key)) {
+            orderOnlyNicknamesMap.set(key, trimmed);
+          }
+        }
+      });
+
+      let pointNicknames = Array.from(pointNicknamesMap.values());
+      let orderOnlyNicknames = Array.from(orderOnlyNicknamesMap.values());
+
+      const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+      if (query) {
+        pointNicknames = pointNicknames.filter(n => n.toLowerCase().includes(query));
+        orderOnlyNicknames = orderOnlyNicknames.filter(n => n.toLowerCase().includes(query));
+      }
+
+      // 각 그룹별 가나다순 정렬
+      pointNicknames.sort((a, b) => a.localeCompare(b, 'ko'));
+      orderOnlyNicknames.sort((a, b) => a.localeCompare(b, 'ko'));
+
+      const totalCount = pointNicknames.length + orderOnlyNicknames.length;
+      if (countBadge) countBadge.textContent = totalCount;
+
+      if (totalCount === 0) {
+        container.innerHTML = `
+          <div class="py-10 px-4 text-center text-slate-400">
+            <i data-lucide="user-x" class="w-8 h-8 mx-auto text-slate-300 mb-2 stroke-[1.5]"></i>
+            <p class="text-xs font-bold text-slate-600 mb-1">일치하는 회원이 없습니다</p>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              상단의 <strong class="text-emerald-700 font-bold">[+추가]</strong> 버튼을 눌러 회원을 등록하고 포인트를 지급하세요.
+            </p>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      // 개별 회원 항목 생성 함수
+      const createMemberBtn = (nick, isFromPointTab) => {
+        const nickKey = nick.toLowerCase();
+        let balance = 0;
+        let txCount = 0;
+        pointData.forEach(p => {
+          if ((p.nickname || "").trim().toLowerCase() === nickKey) {
+            balance += (p.earnPoint || 0) - (p.usePoint || 0);
+            txCount++;
+          }
+        });
+
+        const isSelected = selectedPointMember.trim().toLowerCase() === nickKey;
+        const itemBtn = document.createElement("button");
+        itemBtn.type = "button";
+        itemBtn.className = `w-full text-left p-2.5 sm:p-3 rounded-2xl border transition-all flex items-center justify-between gap-2.5 cursor-pointer ${
+          isSelected 
+            ? 'bg-emerald-500 text-white border-emerald-600 shadow-sm' 
+            : 'bg-white hover:bg-emerald-50/60 border-slate-200/80 text-slate-800'
+        }`;
+
+        itemBtn.innerHTML = `
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs ${
+              isSelected ? 'bg-white/20 text-white' : (isFromPointTab ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-100')
+            }">
+              <i data-lucide="${isFromPointTab ? 'coins' : 'user'}" class="w-4 h-4"></i>
+            </div>
+            <div class="truncate">
+              <div class="text-xs sm:text-sm font-extrabold truncate ${isSelected ? 'text-white' : 'text-slate-900'}">
+                ${escapeHtml(nick)}
+              </div>
+              <div class="text-[10px] ${isSelected ? 'text-emerald-100' : 'text-slate-400'}">
+                ${isFromPointTab ? `내역 ${txCount}건` : '주문 회원 (포인트 미등록)'}
+              </div>
+            </div>
+          </div>
+          <div class="shrink-0 text-right">
+            <span class="inline-block px-2 py-0.5 rounded-lg text-xs font-black ${
+              isSelected 
+                ? 'bg-white text-emerald-900' 
+                : balance > 0 
+                  ? 'bg-amber-100 text-amber-900 border border-amber-200' 
+                  : 'bg-slate-100 text-slate-500'
+            }">
+              ${balance.toLocaleString()}P
+            </span>
+          </div>
+        `;
+
+        itemBtn.addEventListener("click", () => {
+          selectedPointMember = nick;
+          renderPointMemberList();
+          renderSelectedMemberDetail();
+        });
+
+        return itemBtn;
+      };
+
+      // 1순위: 포인트 탭 등록 회원 렌더링
+      if (pointNicknames.length > 0) {
+        const pointHeader = document.createElement("div");
+        pointHeader.className = "px-2 py-1 flex items-center justify-between text-[11px] font-bold text-amber-800 bg-amber-50/80 rounded-lg border border-amber-200/60";
+        pointHeader.innerHTML = `
+          <span class="flex items-center gap-1"><i data-lucide="coins" class="w-3.5 h-3.5 text-amber-600"></i> 포인트 보유/등록 회원</span>
+          <span class="text-[10px] bg-amber-200/80 px-1.5 py-0.2 rounded-full">${pointNicknames.length}명</span>
+        `;
+        container.appendChild(pointHeader);
+
+        pointNicknames.forEach(nick => {
+          container.appendChild(createMemberBtn(nick, true));
+        });
+      }
+
+      // 2순위: 주문데이터 탭 회원 렌더링
+      if (orderOnlyNicknames.length > 0) {
+        const orderHeader = document.createElement("div");
+        orderHeader.className = "px-2 py-1 mt-3 flex items-center justify-between text-[11px] font-bold text-emerald-900 bg-emerald-50/80 rounded-lg border border-emerald-200/60";
+        orderHeader.innerHTML = `
+          <span class="flex items-center gap-1"><i data-lucide="shopping-bag" class="w-3.5 h-3.5 text-emerald-600"></i> 주문데이터 회원 (포인트 신규 지급 가능)</span>
+          <span class="text-[10px] bg-emerald-200/80 px-1.5 py-0.2 rounded-full">${orderOnlyNicknames.length}명</span>
+        `;
+        container.appendChild(orderHeader);
+
+        orderOnlyNicknames.forEach(nick => {
+          container.appendChild(createMemberBtn(nick, false));
+        });
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // [우측 레이아웃] 선택된 회원의 포인트 상세 및 내역 렌더링
+    function renderSelectedMemberDetail() {
+      const promptView = document.getElementById("pointNoMemberSelectedPrompt");
+      const detailView = document.getElementById("pointMemberDetailView");
+      if (!promptView || !detailView) return;
+
+      if (!selectedPointMember) {
+        promptView.classList.remove("hidden");
+        detailView.classList.add("hidden");
+        return;
+      }
+
+      promptView.classList.add("hidden");
+      detailView.classList.remove("hidden");
+
+      const memberNickElem = document.getElementById("selectedMemberNickname");
+      const memberTxCountElem = document.getElementById("selectedMemberTxCount");
+      const earnBadge = document.getElementById("memberTotalEarnBadge");
+      const useBadge = document.getElementById("memberTotalUseBadge");
+      const balanceBadge = document.getElementById("memberBalanceBadge");
+      const listContainer = document.getElementById("memberPointHistoryList");
+
+      if (memberNickElem) memberNickElem.textContent = selectedPointMember;
+
+      // 선택된 회원의 내역 필터링 (공백 및 대소문자 정규화 대조)
+      const selectedKey = selectedPointMember.trim().toLowerCase();
+      const memberTxs = pointData.filter(p => (p.nickname || "").trim().toLowerCase() === selectedKey);
+      
+      let totalEarn = 0;
+      let totalUse = 0;
+      memberTxs.forEach(t => {
+        totalEarn += (t.earnPoint || 0);
+        totalUse += (t.usePoint || 0);
+      });
+      const balance = totalEarn - totalUse;
+
+      if (memberTxCountElem) memberTxCountElem.textContent = `총 ${memberTxs.length}건`;
+      if (earnBadge) earnBadge.textContent = `${totalEarn.toLocaleString()}P`;
+      if (useBadge) useBadge.textContent = `${totalUse.toLocaleString()}P`;
+      if (balanceBadge) balanceBadge.textContent = `${balance.toLocaleString()}P`;
+
+      // 거래 내역 리스트 생성
+      if (!listContainer) return;
+      listContainer.innerHTML = "";
+
+      if (memberTxs.length === 0) {
+        listContainer.innerHTML = `
+          <div class="py-12 text-center text-slate-400">
+            <i data-lucide="receipt" class="w-8 h-8 mx-auto text-slate-300 mb-1.5 stroke-[1.5]"></i>
+            <p class="text-xs font-bold text-slate-600">[${escapeHtml(selectedPointMember)}] 회원의 포인트 내역이 없습니다.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">상단 입력창에서 신규 지급 또는 사용을 등록해보세요.</p>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      memberTxs.forEach((tx, idx) => {
+        const isEarn = tx.earnPoint > 0;
+        const row = document.createElement("div");
+        row.className = `px-3 py-2 bg-white rounded-xl border transition-all flex items-center gap-2 text-xs shadow-2xs ${
+          isEarn ? 'border-emerald-100 hover:border-emerald-300' : 'border-rose-100 hover:border-rose-300'
+        }`;
+
+        const pointAmountStr = isEarn 
+          ? `+${tx.earnPoint.toLocaleString()}P` 
+          : `-${tx.usePoint.toLocaleString()}P`;
+        const detailStr = isEarn ? (tx.earnDetail || "-") : (tx.useDetail || "-");
+
+        row.innerHTML = `
+          <!-- 번호 -->
+          <span class="w-8 text-center text-slate-400 shrink-0 text-[11px] font-bold">
+            ${idx + 1}
+          </span>
+
+          <!-- 날짜 -->
+          <span class="w-24 shrink-0 text-slate-600 font-mono text-[11px]">
+            ${escapeHtml(tx.date || "-")}
+          </span>
+
+          <!-- 구분 뱃지 -->
+          <span class="w-20 text-center shrink-0">
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
+              isEarn ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
+            }">
+              ${isEarn ? '지급(적립)' : '포인트사용'}
+            </span>
+          </span>
+
+          <!-- 포인트 -->
+          <span class="w-24 text-right shrink-0 font-extrabold ${isEarn ? 'text-emerald-700' : 'text-rose-600'}">
+            ${pointAmountStr}
+          </span>
+
+          <!-- 적립 / 사용 내역 -->
+          <span class="flex-1 min-w-0 truncate px-2 text-slate-700 font-medium" title="${escapeHtml(detailStr)}">
+            ${escapeHtml(detailStr)}
+          </span>
+        `;
+
+        listContainer.appendChild(row);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // 선택된 회원에 대한 신규 포인트 지급/사용 등록 처리
+    function submitMemberPointRecord() {
+      // 1. 중복 실행 전역 차단 (이미 전송 중인 경우 무조건 중단)
+      if (isPointSubmitting) {
+        return;
+      }
+
+      if (!selectedPointMember) {
+        showToast("회원을 먼저 선택해주세요.", "error");
+        return;
+      }
+
+      const dateInput = document.getElementById("memberPointDate");
+      const amountInput = document.getElementById("memberPointAmount");
+      const detailInput = document.getElementById("memberPointDetail");
+
+      const dateVal = dateInput ? dateInput.value.trim() : "";
+      const amountVal = amountInput ? parseInt(amountInput.value.trim(), 10) : 0;
+      const detailVal = detailInput ? detailInput.value.trim() : "";
+      const nickVal = selectedPointMember;
+
+      if (!dateVal) {
+        showToast("처리 일자를 선택해주세요.", "error");
+        return;
+      }
+      if (!amountVal || amountVal <= 0) {
+        showToast("포인트 금액을 1P 이상 입력해주세요.", "error");
+        return;
+      }
+
+      // [추가] 잔여 포인트 이상 사용 처리 불가 검증 로직
+      const isEarn = currentPointMode === "earn";
+      if (!isEarn) {
+        const selectedKey = nickVal.trim().toLowerCase();
+        let currentBalance = 0;
+        pointData.forEach(p => {
+          if ((p.nickname || "").trim().toLowerCase() === selectedKey) {
+            currentBalance += (p.earnPoint || 0) - (p.usePoint || 0);
+          }
+        });
+
+        if (amountVal > currentBalance) {
+          const alertMsg = `<div class="space-y-1 text-center">
+            <p class="text-xs text-slate-500">[${escapeHtml(nickVal)}] 님의 현재 잔여 포인트는 <strong>${currentBalance.toLocaleString()}P</strong> 입니다.</p>
+          </div>`;
+          if (typeof window.showAlert === "function") {
+            window.showAlert(alertMsg, "잔여포인트가 부족합니다");
+          } else {
+            showToast("잔여포인트가 부족합니다", "error");
+          }
+          if (amountInput) {
+            amountInput.focus();
+            amountInput.select();
+          }
+          return;
+        }
+      }
+
+      // 전역 락 활성화 및 버튼 비활성화 (더블클릭/연타 원천 봉쇄)
+      isPointSubmitting = true;
+      const earnPoint = isEarn ? String(amountVal) : "";
+      const earnDetail = isEarn ? detailVal : "";
+      const usePoint = !isEarn ? String(amountVal) : "";
+      const useDetail = !isEarn ? detailVal : "";
+
+      const btn = document.getElementById("memberPointSubmitBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add("opacity-50", "cursor-not-allowed");
+        btn.innerHTML = `<span class="inline-block animate-spin mr-1">⏳</span>처리중`;
+      }
+      showToast("구글 시트 포인트 탭에 등록 중...", "info");
+
+      // 유일무이한 트랜잭션 고유 ID 생성 (UUID + 타임스탬프)
+      const uniqueTxId = "tx_" + Date.now() + "_" + Math.random().toString(36).substring(2, 10);
+      const callbackName = "cb_pt_sub_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+
+      const payload = {
+        action: 'addPoint',
+        type: 'addPoint',
+        method: 'addPoint',
+        callback: callbackName,
+        sheetName: '포인트',
+        targetSheet: '포인트',
+        requestId: uniqueTxId, // 고유 요청 키
+        date: dateVal,
+        nickname: nickVal,
+        earnPoint: earnPoint,
+        earnDetail: earnDetail,
+        usePoint: usePoint,
+        useDetail: useDetail,
+        col1: dateVal,
+        col2: nickVal,
+        col3: earnPoint,
+        col4: earnDetail,
+        col5: usePoint,
+        col6: useDetail,
+        _t: String(Date.now())
+      };
+
+      const queryParams = new URLSearchParams(payload).toString();
+      const targetUrl = APPS_SCRIPT_SYNC_URL + (APPS_SCRIPT_SYNC_URL.includes('?') ? '&' : '?') + queryParams;
+
+      // 1. 로컬 UI 즉시 추가 반영
+      pointData.unshift({
+        date: dateVal,
+        nickname: nickVal,
+        earnPoint: isEarn ? amountVal : 0,
+        earnDetail: earnDetail,
+        usePoint: !isEarn ? amountVal : 0,
+        useDetail: useDetail
+      });
+      renderPointMemberList();
+      renderSelectedMemberDetail();
+
+      // 2. 단일 스크립트 전송 및 중복 처리 차단 플래그
+      let sTag = document.createElement('script');
+      let isCompleted = false;
+      let safetyTimeout = null;
+
+      const finishProcess = () => {
+        // 이미 완료 처리가 실행되었으면 재실행 방지
+        if (isCompleted) return;
+        isCompleted = true;
+
+        if (safetyTimeout) {
+          clearTimeout(safetyTimeout);
+          safetyTimeout = null;
+        }
+
+        if (sTag && sTag.parentNode) {
+          sTag.parentNode.removeChild(sTag);
+        }
+        sTag = null;
+
+        if (window[callbackName]) {
+          delete window[callbackName];
+        }
+
+        if (amountInput) amountInput.value = "";
+        if (detailInput) detailInput.value = "";
+
+        showToast(`[${nickVal}] 포인트 처리가 완료되었습니다.`, "success");
+
+        // 연타 방지를 위해 1.5초 후 락 해제
+        setTimeout(() => {
+          isPointSubmitting = false;
+          if (btn) {
+            btn.disabled = false;
+            btn.classList.remove("opacity-50", "cursor-not-allowed");
+            btn.textContent = isEarn ? "지급" : "차감";
+          }
+        }, 1500);
+
+        // 시트 백그라운드 재동기화
+        setTimeout(() => loadPointSheetData(true), 3500);
+      };
+
+      // 전역 콜백 등록
+      window[callbackName] = function() {
+        finishProcess();
+      };
+
+      sTag.src = targetUrl;
+      sTag.async = true;
+      sTag.onload = () => finishProcess();
+      sTag.onerror = () => finishProcess();
+
+      // 타임아웃 방어막 (4초 후 자동 완료 처리)
+      safetyTimeout = setTimeout(() => {
+        finishProcess();
+      }, 4000);
+
+      document.body.appendChild(sTag);
+    }
 
     function escapeHtml(str) {
       if (!str) return "";
