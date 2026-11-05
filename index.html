@@ -268,9 +268,17 @@
             <p class="text-[11px] sm:text-xs text-emerald-700 font-medium mt-0.5">왼쪽 달력에서 일자를 클릭하여 오른쪽의 픽업예정 목록을 확인하세요.</p>
           </div>
         </div>
-        <button id="closeTodayPickupBtn" type="button" aria-label="닫기" class="w-9 h-9 rounded-xl text-emerald-700 hover:text-emerald-950 hover:bg-emerald-100/70 flex items-center justify-center transition-colors cursor-pointer">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          <!-- 새로고침 버튼 추가 -->
+          <button id="refreshTodayPickupBtn" type="button" title="픽업 일정 및 상태 새로고침"
+            class="px-3 py-2 rounded-xl bg-white border border-emerald-200 hover:bg-emerald-50 active:scale-95 text-emerald-800 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-emerald-600"></i>
+            <span>새로고침</span>
+          </button>
+          <button id="closeTodayPickupBtn" type="button" aria-label="닫기" class="w-9 h-9 rounded-xl text-emerald-700 hover:text-emerald-950 hover:bg-emerald-100/70 flex items-center justify-center transition-colors cursor-pointer">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
       </div>
 
       <!-- 본문 영역: 좌측 달력 패널(폭 축소) + 우측 리스트 패널(폭 대폭 확장 및 반응형 최적화) -->
@@ -1666,6 +1674,23 @@
       const closeTodayPickupFooterBtn = document.getElementById("closeTodayPickupFooterBtn");
       if (closeTodayPickupFooterBtn) {
         closeTodayPickupFooterBtn.addEventListener("click", closeTodayPickupModal);
+      }
+
+      // '픽업 일정 및 상태 확인' 모달 내 새로고침 버튼 이벤트 바인딩
+      const refreshTodayPickupBtn = document.getElementById("refreshTodayPickupBtn");
+      if (refreshTodayPickupBtn) {
+        refreshTodayPickupBtn.addEventListener("click", () => {
+          showToast("픽업 일정을 새로고침 중입니다...", "info");
+          loadGoogleSheetData(true);
+          setTimeout(() => {
+            renderCalendar();
+            renderTodayPickupList();
+            const totalPending = ordersData.filter(o => o.status === "픽업예정");
+            const badge = document.getElementById("todayPickupCountBadge");
+            if (badge) badge.textContent = `${totalPending.length}건`;
+            showToast("픽업 일정이 갱신되었습니다.", "success");
+          }, 600);
+        });
       }
 
       // 오늘 픽업 상태 확인 팝업 배경 클릭 시 닫기
